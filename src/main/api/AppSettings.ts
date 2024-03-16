@@ -1,10 +1,17 @@
-import { dirname, join } from 'path';
 import { Profile } from '../../shared/types';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
-import { tryParseJson } from '../utils';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { getDataPath } from '../utils';
+
+const tryParseJson = (json: string) => {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+};
 
 class AppSettings {
-  private static SETTINGS_FILE_PATH = join(__dirname, '../../data/settings.json');
+  private static SETTINGS_FILE_PATH = getDataPath('settings.json');
   private static instance: AppSettings;
   private savedJson: string = '';
   private profiles: Profile[] = [];
@@ -37,9 +44,6 @@ class AppSettings {
 
   public writeSaveFile() {
     const { savedJson, ...appSettings } = this;
-    const dirName = dirname(AppSettings.SETTINGS_FILE_PATH);
-
-    if (!existsSync(dirName)) mkdirSync(dirName, { recursive: true });
 
     const updatedJson = JSON.stringify(appSettings, undefined, 2);
     if (updatedJson === this.savedJson) return;

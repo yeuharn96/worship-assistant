@@ -1,9 +1,10 @@
 import { ElectronAPI } from '@electron-toolkit/preload';
-import { MainIpcHandler } from '../main/ipc/index';
+import { InvokeHandlers } from '../main/ipc/handlers/invokeHandlers';
+import { SendHandlers } from '../main/ipc/handlers/sendHandlers';
 
 declare global {
   interface Window {
     electron: ElectronAPI;
-    api: MainIpcHandler;
+    api: InvokeHandlers & SendHandlers;
   }
 }

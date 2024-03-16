@@ -1,9 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { BibleData } from '../../shared/types';
-
-const DEFAULT_EN_BIBLE_PATH = '../../resources/esv-utf8.txt';
-const DEFAULT_ZH_BIBLE_PATH = '../../resources/hgb-utf8.txt';
+import { getResourcePath } from '../utils';
 
 const loadBible = (filePath: string) => {
   let data = fs.readFileSync(filePath, { encoding: 'utf-8' });
@@ -30,8 +28,8 @@ const loadBible = (filePath: string) => {
 
 const reloadBible = () => {
   BIBLE_DATA = {
-    zh: loadBible(path.resolve(__dirname, DEFAULT_ZH_BIBLE_PATH)),
-    en: loadBible(path.resolve(__dirname, DEFAULT_EN_BIBLE_PATH)),
+    zh: loadBible(path.join(getResourcePath('hgb-utf8.txt'))),
+    en: loadBible(path.join(getResourcePath('esv-utf8.txt'))),
   };
 };
 

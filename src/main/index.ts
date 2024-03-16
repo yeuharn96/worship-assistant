@@ -2,13 +2,7 @@ import { app, protocol, screen } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { createWindow } from './windows/ControlPanelWindow';
 import { createOutputWindow } from './windows/OutputWindow';
-import { setupHandlers } from './ipc';
-import path from 'path';
-
-const initDirPath = () => {
-  process.env.RESOURCE_DIR = path.resolve(__dirname, '../../resources');
-  process.env.DATA_DIR = path.resolve(__dirname, '../../data');
-};
+import setupMainHandlers from './ipc/setupMainHandlers';
 
 app.whenReady().then(() => {
   // Set app user model id for windows
@@ -20,8 +14,6 @@ app.whenReady().then(() => {
     // see https://github.com/alex8088/electron-toolkit/tree/master/packages/utils
     optimizer.watchWindowShortcuts(window);
   });
-
-  initDirPath();
 
   const mainWindow = createWindow();
   process.env.MAIN_WINDOW_ID = mainWindow.id.toString();
@@ -39,7 +31,7 @@ app.whenReady().then(() => {
     callback(pathname);
   });
 
-  setupHandlers();
+  setupMainHandlers();
 });
 
 app.on('window-all-closed', () => {

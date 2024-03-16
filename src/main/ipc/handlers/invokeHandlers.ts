@@ -1,11 +1,12 @@
 import { dialog, screen } from 'electron';
-import VERSE_COUNT from '../bible/verse-count.json';
-import { BIBLE_DATA } from '../bible/bible.data';
-import { Profile, ReturnPromise, ScriptureLocation, Video } from '../../shared/types';
-import { appSettings } from '../api/AppSettings';
-import path, { extname, join } from 'path';
+import VERSE_COUNT from '../../bible/verse-count.json';
+import { BIBLE_DATA } from '../../bible/bible.data';
+import { Profile, ReturnPromise, ScriptureLocation, Video } from '../../../shared/types';
+import { appSettings } from '../../api/AppSettings';
+import path, { extname } from 'path';
 import { copyFileSync, existsSync, unlinkSync } from 'fs';
 import crypto from 'crypto';
+import { getDataPath } from '../../utils';
 
 const invokeHandlers = {
   listProfiles: () => appSettings.getProfiles(),
@@ -40,7 +41,7 @@ const invokeHandlers = {
   copyToDataFolder: (filePath: string) => {
     if (!existsSync(filePath)) throw new Error('File does not exists.');
 
-    const dest = join(process.env.DATA_DIR, `${crypto.randomUUID()}${extname(filePath)}`);
+    const dest = getDataPath(`${crypto.randomUUID()}${extname(filePath)}`);
     copyFileSync(filePath, dest);
     return dest.replaceAll('\\', '/');
   },

@@ -1,6 +1,5 @@
 appId: com.yeuharn96.worship-assistant
 productName: Worship Assistant
-author: yeuharn96
 directories:
   buildResources: build
 files:
@@ -12,7 +11,6 @@ files:
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
 asarUnpack:
   - resources/**
-  - data/*
 win:
   executableName: Worship Assistant
   icon: ./resources/ico.ico

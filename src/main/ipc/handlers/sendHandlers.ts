@@ -1,6 +1,6 @@
 import { spawn } from 'child_process';
-import { WebContentEventListeners } from '../../shared/types';
-import { getMainWindow, getOutputWindow } from '../windows/getWindows';
+import { WebContentEventListeners } from '../../../shared/types';
+import { getMainWindow, getOutputWindow } from '../../windows/getWindows';
 
 const sendHandlers = {
   showOutput: () => {
