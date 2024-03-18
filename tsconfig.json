@@ -1,6 +1,11 @@
 {
+  "include": ["src/**/*"],
   "compilerOptions": {
-    "composite": true,
+    "types": ["node"],
+    "target": "es2016",
+    "module": "commonjs",
+    "baseUrl": "./src/",
+    "skipLibCheck": true,
     "noUnusedLocals": false,
     "noUnusedParameters": false
   }
