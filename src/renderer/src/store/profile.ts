@@ -22,7 +22,7 @@ const defaultProfile: Profile = {
   mode: 'bible',
 
   // bible
-  lang: 'zh',
+  lang: 'en',
   bgColor: '#000000',
   bgImage: undefined,
   spacing: 8,

@@ -27,6 +27,9 @@ const ControlPanel = () => {
         setOutput({ isShowing: false });
         if (mode === 'video') window.api.sendVideoCommand({ pause: true });
       },
+      setBookTitleLanguage: (lang) => {
+        setProfile({ lang });
+      },
     },
     [mode],
   );

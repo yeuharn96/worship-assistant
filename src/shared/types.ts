@@ -66,6 +66,7 @@ export type WebContentEventListeners = {
   monitorOutput: (sourceId?: string) => void;
 
   // bible
+  setBookTitleLanguage: (lang: 'en' | 'zh') => void;
   setOutputBibleText: (loc: ScriptureLocation) => void;
   scrollOutputOffset: (offset: number) => void;
   syncOutputScroll: (

@@ -1,8 +1,9 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { appSettings } from '../api/AppSettings';
 import { Profile } from '../../shared/types';
+import createMenu from './createMenu';
 
 export const createWindow = () => {
   const mainWindow = new BrowserWindow({
@@ -15,7 +16,7 @@ export const createWindow = () => {
       sandbox: false,
     },
   });
-  createMenu();
+  createMenu(mainWindow);
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show();
@@ -44,31 +45,4 @@ export const createWindow = () => {
   }
 
   return mainWindow;
-};
-
-const createMenu = () => {
-  // Create the menu
-  const menu = Menu.buildFromTemplate([
-    // {
-    //   label: 'Profile',
-    //   submenu: [
-    //     { label: 'Manage' },
-    //     {
-    //       label: 'Switch Profile',
-    //       submenu: [{ label: 'profile 1' }, { label: 'profile 2' }],
-    //     },
-    //   ],
-    // },
-    // {
-    //   label: 'Language',
-    //   submenu: [
-    //     { label: 'English (EN)', type: 'radio', checked: true },
-    //     { label: 'Mandarin (ZH)', type: 'radio' },
-    //   ],
-    // },
-    { label: 'Exit', role: 'quit' },
-  ]);
-
-  // Set the menu
-  Menu.setApplicationMenu(menu);
 };

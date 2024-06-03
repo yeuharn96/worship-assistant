@@ -90,6 +90,23 @@ const PreviewOutputPane: FC<Props> = () => {
     window.api.scrollOutputOffset(offset);
   };
 
+  const scrollToNextVerse = (next: boolean) => {
+    const { scrollTop, versePos } = outputScrollInfo ?? {};
+    const verseIdx = versePos?.findLastIndex((pos) => scrollTop >= pos.scrollTop) ?? -1;
+    if (verseIdx === -1) return;
+
+    if (verseIdx === 0 && !next) {
+      scrollToPos(versePos[0].scrollTop);
+      return;
+    }
+    if (verseIdx === versePos.length - 1 && next) {
+      scrollToPos(versePos[versePos.length - 1].scrollTop);
+      return;
+    }
+
+    scrollToPos(versePos[verseIdx + (next ? 1 : -1)].scrollTop);
+  };
+
   const renderVerseTooltip = () => {
     const lastVerse = outputScrollInfo.versePos.at(-1);
     if (!lastVerse) return;
@@ -181,26 +198,48 @@ const PreviewOutputPane: FC<Props> = () => {
       </div>
 
       {isShowing && (
-        <div className='pt-[4vh]'>
-          <Button
-            variant='border'
-            size='lg'
-            className='mx-2'
-            title='Scroll Up'
-            onClick={() => scrollOffset(-scrollUnit)}
-          >
-            <ChevronUp className='h-10 w-10' />
-          </Button>
-          <Button
-            variant='border'
-            size='lg'
-            className='mx-2'
-            title='Scroll Down'
-            onClick={() => scrollOffset(scrollUnit)}
-          >
-            <ChevronDown className='h-10 w-10' />
-          </Button>
-        </div>
+        <>
+          <div className='pt-[4vh] w-[30vw] flex'>
+            <Button
+              variant='border'
+              size='lg'
+              className='mx-2 pl-6 flex-1'
+              title='Scroll Up'
+              onClick={() => scrollOffset(-scrollUnit)}
+            >
+              <ChevronUp className='h-10 w-10' /> Scroll Up
+            </Button>
+            <Button
+              variant='border'
+              size='lg'
+              className='mx-2 pl-6 flex-1'
+              title='Scroll Down'
+              onClick={() => scrollOffset(scrollUnit)}
+            >
+              <ChevronDown className='h-10 w-10' /> Scroll Down
+            </Button>
+          </div>
+          <div className='pt-[4vh] w-[30vw] flex'>
+            <Button
+              variant='border'
+              size='lg'
+              className='mx-2 pl-6 flex-1'
+              title='Scroll To Previous Verse'
+              onClick={() => scrollToNextVerse(false)}
+            >
+              <ChevronUp className='h-10 w-10' /> Prev Verse
+            </Button>
+            <Button
+              variant='border'
+              size='lg'
+              className='mx-2 pl-6 flex-1'
+              title='Scroll To Next Verse'
+              onClick={() => scrollToNextVerse(true)}
+            >
+              <ChevronDown className='h-10 w-10' /> Next Verse
+            </Button>
+          </div>
+        </>
       )}
     </div>
   );

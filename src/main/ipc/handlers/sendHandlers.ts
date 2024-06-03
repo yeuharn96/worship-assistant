@@ -35,6 +35,9 @@ const webContentEventHandlers: WebContentEventListeners = {
   },
 
   // bible
+  setBookTitleLanguage: (...args) => {
+    getMainWindow()?.webContents.send('setBookTitleLanguage', ...args);
+  },
   setOutputBibleText: (...args) => {
     getOutputWindow()?.webContents.send('setOutputBibleText', ...args);
   },
