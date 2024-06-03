@@ -31,6 +31,7 @@ const sendEvents: App.IpcRendererApi['send'] = {
   sendVideoCommand: true,
   syncVideoPlayState: true,
   signalVideoEnded: true,
+  setBookTitleLanguage: true,
 };
 
 const setupRendererApi = () => {
