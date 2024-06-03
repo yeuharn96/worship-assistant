@@ -22,7 +22,7 @@ const BibleSelectionPane = () => {
       const count = await window.api.getVerseCount(book, chapter);
       setTotalVerse(count);
     })();
-  }, [chapter]);
+  }, [book, chapter]);
 
   return (
     <div className='flex h-[90vh] [&>*]:h-full'>

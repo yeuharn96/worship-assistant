@@ -1,6 +1,7 @@
 import { Profile } from '../../shared/types';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import { getDataPath } from '../utils';
+import { dirname } from 'path';
 
 const tryParseJson = (json: string) => {
   try {
@@ -47,6 +48,10 @@ class AppSettings {
 
     const updatedJson = JSON.stringify(appSettings, undefined, 2);
     if (updatedJson === this.savedJson) return;
+
+    if (!existsSync(AppSettings.SETTINGS_FILE_PATH)) {
+      mkdirSync(dirname(AppSettings.SETTINGS_FILE_PATH), { recursive: true });
+    }
 
     writeFileSync(AppSettings.SETTINGS_FILE_PATH, updatedJson, {
       encoding: 'utf-8',

@@ -4,12 +4,12 @@ import useOutputStore from '@renderer/store/output';
 import { Input } from '../ui/input';
 import { Search } from 'lucide-react';
 import { useState } from 'react';
-import useLanguageStore from '@renderer/store/language';
+import useProfileStore from '@renderer/store/profile';
 
 type BookMeta = (typeof bible_meta)[0];
 
 const BibleBookSelect = () => {
-  const { displayLanguage } = useLanguageStore();
+  const { lang } = useProfileStore();
   const { book: outputBook, setOutput } = useOutputStore();
 
   const [searchText, setSearchText] = useState('');
@@ -37,7 +37,7 @@ const BibleBookSelect = () => {
   return (
     <>
       <div className='flex'>
-        <h3 className='font-semibold tracking-tight underline text-xl'>Old Testament</h3>
+        <h3 className='font-semibold tracking-tight underline text-xl'>{lang === 'zh' ? '旧约' : 'Old Testament'}</h3>
         <div className='relative flex items-center ml-auto'>
           <Search className='absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform' />
           <Input
@@ -59,12 +59,14 @@ const BibleBookSelect = () => {
               disabled={!searchFilter(book)}
               onClick={() => handleSelectBook(book._eng)}
             >
-              {displayLanguage === 'zh' ? book.chi : book.eng}
+              {lang === 'zh' ? book.chi : book.eng}
             </Button>
           ))}
       </div>
       <hr />
-      <h3 className='font-semibold tracking-tight underline pt-1 text-xl'>New Testament</h3>
+      <h3 className='font-semibold tracking-tight underline pt-1 text-xl'>
+        {lang === 'zh' ? '新约' : 'New Testament'}
+      </h3>
       <div className='flex flex-wrap justify-start'>
         {bible_meta
           .filter((book) => book.testament === 'new')
@@ -76,7 +78,7 @@ const BibleBookSelect = () => {
               disabled={!searchFilter(book)}
               onClick={() => handleSelectBook(book._eng)}
             >
-              {displayLanguage === 'zh' ? book.chi : book.eng}
+              {lang === 'zh' ? book.chi : book.eng}
             </Button>
           ))}
       </div>
