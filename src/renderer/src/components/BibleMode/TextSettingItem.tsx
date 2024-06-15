@@ -3,6 +3,7 @@ import InputNumber from '../ui/input-number';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { TextSetting } from 'src/shared/types';
 import { cn } from '@renderer/lib/utils';
+import { Toggle } from '../ui/toggle';
 
 type BaseProps = {
   name: string;
@@ -10,7 +11,7 @@ type BaseProps = {
   size: number;
   font: string;
   extended?: boolean;
-  onChange?: (value: Partial<Omit<TextSetting, 'show'>>) => void;
+  onChange?: (value: Partial<TextSetting>) => void;
 };
 
 type ExtendedProps = BaseProps & {
@@ -18,12 +19,14 @@ type ExtendedProps = BaseProps & {
   bold: boolean;
   italic: boolean;
   underline: boolean;
+  show: boolean;
+  hideShowToggle?: boolean;
 };
 
 type Props = BaseProps | ExtendedProps;
 
 const TextSettingItem: FC<Props> = ({ name, color, size, font, onChange, extended, ...props }) => {
-  const { bold, italic, underline } = extended ? props : ({} as any);
+  const { bold, italic, underline, show, hideShowToggle } = extended ? props : ({} as any);
 
   const [fontOptions, setFontOptions] = useState<string[]>([]);
 
@@ -37,32 +40,47 @@ const TextSettingItem: FC<Props> = ({ name, color, size, font, onChange, extende
     <div className='flex my-2 items-center'>
       <div className={cn('flex-[1] pr-1', extended && 'text-center font-bold')}>{name}</div>
       {extended && (
-        <div className='flex-[1] px-1'>
-          <ToggleGroup
-            variant='default'
-            type='multiple'
-            className='justify-end'
-            value={[...(bold ? ['bold'] : []), ...(italic ? ['italic'] : []), ...(underline ? ['underline'] : [])]}
-            onValueChange={(val) => {
-              onChange &&
-                onChange({
-                  bold: val.includes('bold'),
-                  italic: val.includes('italic'),
-                  underline: val.includes('underline'),
-                });
-            }}
-          >
-            <ToggleGroupItem value='bold' aria-label='Toggle Bold' className='border-2 border-gray-400 w-12'>
-              B
-            </ToggleGroupItem>
-            <ToggleGroupItem value='italic' aria-label='Toggle EN' className='border-2 border-gray-400 w-12'>
-              I
-            </ToggleGroupItem>
-            <ToggleGroupItem value='underline' aria-label='Toggle title' className='border-2 border-gray-400 w-12'>
-              U
-            </ToggleGroupItem>
-          </ToggleGroup>
-        </div>
+        <>
+          <div className='flex-[1] px-1 flex justify-center'>
+            {!hideShowToggle ? (
+              <Toggle
+                pressed={show}
+                className='border-2 border-gray-400 w-20'
+                onPressedChange={(pressed) => onChange && onChange({ show: pressed })}
+              >
+                Show
+              </Toggle>
+            ) : (
+              <div className='w-20' />
+            )}
+          </div>
+          <div className='flex-[1] px-1 flex justify-center'>
+            <ToggleGroup
+              variant='default'
+              type='multiple'
+              className='justify-end'
+              value={[...(bold ? ['bold'] : []), ...(italic ? ['italic'] : []), ...(underline ? ['underline'] : [])]}
+              onValueChange={(val) => {
+                onChange &&
+                  onChange({
+                    bold: val.includes('bold'),
+                    italic: val.includes('italic'),
+                    underline: val.includes('underline'),
+                  });
+              }}
+            >
+              <ToggleGroupItem value='bold' aria-label='Toggle Bold' className='border-2 border-gray-400 w-12'>
+                B
+              </ToggleGroupItem>
+              <ToggleGroupItem value='italic' aria-label='Toggle EN' className='border-2 border-gray-400 w-12'>
+                I
+              </ToggleGroupItem>
+              <ToggleGroupItem value='underline' aria-label='Toggle title' className='border-2 border-gray-400 w-12'>
+                U
+              </ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+        </>
       )}
       <div className='flex-[1] px-1'>
         <input

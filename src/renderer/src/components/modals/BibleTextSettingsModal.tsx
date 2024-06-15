@@ -46,17 +46,19 @@ const BibleTextSettingsModal = () => {
             setPreviewScale(el.clientWidth / dimension.width);
           }
         }}
-        className='w-[90vw] mt-4 mx-auto max-h-[30vh] overflow-auto'
+        className='w-[90vw] mt-4 mx-auto h-[30vh] overflow-auto'
         style={getCanvasBackground(profile)}
       >
-        <ContentTitle
-          profile={{
-            ...profile,
-            title: { ...profile.title, size: profile.title.size * previewScale },
-          }}
-          book='Gen'
-          chapter='1'
-        />
+        {profile.title.show && (
+          <ContentTitle
+            profile={{
+              ...profile,
+              title: { ...profile.title, size: profile.title.size * previewScale },
+            }}
+            book='Gen'
+            chapter='1'
+          />
+        )}
         <ContentLine
           profile={{
             ...profile,
@@ -71,6 +73,7 @@ const BibleTextSettingsModal = () => {
       <div className='w-[90vw] mx-auto mt-4'>
         <div className='flex text-center font-medium border-b-2 border-gray-600 mb-2'>
           <div className='flex-[1] pr-2'></div>
+          <div className='flex-[1] px-1'>Show/Hide</div>
           <div className='flex-[1] px-1'>Style</div>
           <div className='flex-[1] px-1'>Color</div>
           <div className='flex-[1] px-1'>Size</div>
@@ -86,6 +89,7 @@ const BibleTextSettingsModal = () => {
           {...profile.num}
           name='No.'
           extended
+          hideShowToggle
           onChange={(value) => handleTextSettingChange('num', value)}
         />
         <TextSettingItem

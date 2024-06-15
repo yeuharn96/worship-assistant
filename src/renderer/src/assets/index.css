@@ -2,21 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Kaiti';
-  src: url('./Kaiti.ttf');
-}
-
-@font-face {
-  font-family: 'Ma Shan Zheng';
-  src: url('./Ma_Shan_Zheng.zip');
-}
-
-@font-face {
-  font-family: 'Noto Serif Simplified Chinese';
-  src: url('./NotoSerifSC-Regular.otf');
-}
-
 @layer base {
   :root {
     --background: 0 0% 100%;
