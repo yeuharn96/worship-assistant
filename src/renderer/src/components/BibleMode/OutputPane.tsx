@@ -1,8 +1,8 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import { Chapter, Profile, Scale, ScriptureLocation, Size, WebContentEventListeners } from 'src/shared/types';
-import { bible_meta } from '../../../../main/bible/bible.metadata.json';
-import { getTextSettingStyle, getElementHeights, getCanvasStyle } from '@renderer/lib/getCssStyles';
+import { getElementHeights, getCanvasStyle } from '@renderer/lib/getCssStyles';
 import ContentLine from './ContentLine';
+import ContentTitle from './ContentTitle';
 
 type Props = {
   selectedPassage: ScriptureLocation;
@@ -100,24 +100,10 @@ const OutputPane: FC<Props> = ({
     }
   }, [scrollOffset]);
 
-  const renderTitle = () => {
-    const { chi: zhTitle, eng: engTitle } = bible_meta.find((meta) => meta._eng === book) ?? {};
-
-    const style = getTextSettingStyle(profile.title);
-    return (
-      <div className='flex items-center justify-center' style={getElementHeights(profile.title).title}>
-        <div className='w-fit border-b-2' style={{ ...style, borderColor: profile.title.color }}>
-          <span>{profile.zh.show && zhTitle}</span> {profile.zh.show && <span>第 {chapter} 章</span>}{' '}
-          <span>{profile.en.show && engTitle}</span> {profile.en.show && <span>Chapter {chapter}</span>}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className='relative'>
       <div className='absolute' style={getCanvasStyle(profile, outputSize, scale)}>
-        {profile.title.show && renderTitle()}
+        {profile.title.show && <ContentTitle profile={profile} book={book} chapter={chapter} />}
         <div
           ref={contentRef}
           className={`overflow-auto px-2 ${!scrollbar && 'no-scrollbar'}`}

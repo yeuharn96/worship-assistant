@@ -20,7 +20,15 @@ export type ScriptureLocation = {
   verse: string;
 };
 
-export type TextSetting = { size: number; color: string; font: string; show: boolean };
+export type TextSetting = {
+  size: number;
+  color: string;
+  font: string;
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  show: boolean;
+};
 export type Adjustment = { top: number; bottom: number; left: number; right: number };
 export type Profile = {
   profile: { id: string; name: string; selected: boolean };

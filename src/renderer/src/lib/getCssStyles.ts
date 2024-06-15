@@ -5,6 +5,9 @@ export const getTextSettingStyle = (setting: Omit<TextSetting, 'show'>): CSSProp
   color: setting.color,
   fontSize: `${setting.size}pt`,
   fontFamily: setting.font,
+  ...(setting.bold && { fontWeight: 'bold' }),
+  ...(setting.italic && { fontStyle: 'italic' }),
+  ...(setting.underline && { textDecorationLine: 'underline' }),
 });
 
 export const getElementHeights = (titleSetting: TextSetting) => {
@@ -27,13 +30,17 @@ export const getCanvasStyle = (profile: Profile, outputSize: Size, scale?: Scale
     right: `${right * scaleX}px`,
     width: `${outputSize.width - left - right}px`,
     height: `${outputSize.height - top - bottom}px`,
-    backgroundColor: profile.bgColor,
-    ...(profile.bgImage && {
-      backgroundImage: `url("image:///${profile.bgImage}")`,
-      backgroundRepeat: 'no-repeat',
-      backgroundSize: 'cover',
-    }),
+    ...getCanvasBackground(profile),
     ...(scale && { transform: `scale(${scaleX}, ${scaleY})` }),
     transformOrigin: 'top left',
   };
 };
+
+export const getCanvasBackground = (profile: Profile) => ({
+  backgroundColor: profile.bgColor,
+  ...(profile.bgImage && {
+    backgroundImage: `url("image:///${profile.bgImage}")`,
+    backgroundRepeat: 'no-repeat',
+    backgroundSize: 'cover',
+  }),
+});

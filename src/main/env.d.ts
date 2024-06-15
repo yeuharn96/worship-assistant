@@ -1,5 +1,5 @@
-import { InvokeHandlers } from './ipc/handlers/invokeHandlers';
-import { SendHandlers } from './ipc/handlers/sendHandlers';
+import { InvokeHandlers } from './ipc/invokeHandlers';
+import { SendHandlers } from './ipc/sendHandlers';
 
 declare global {
   namespace NodeJS {

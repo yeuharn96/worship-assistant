@@ -1,5 +1,6 @@
 import { ipcRenderer } from 'electron';
 
+// had to add ipc events manually in preload script otherwise will get error
 const invokeEvents: App.IpcRendererApi['invoke'] = {
   listProfiles: true,
   getProfile: true,
@@ -16,6 +17,7 @@ const invokeEvents: App.IpcRendererApi['invoke'] = {
   askVideosDialog: true,
   getFileName: true,
   checkFileExists: true,
+  getSystemFonts: true,
 };
 
 const sendEvents: App.IpcRendererApi['send'] = {

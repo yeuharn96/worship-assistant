@@ -1,6 +1,6 @@
 import { BrowserWindow, Menu } from 'electron';
 import { WebContentEventListeners } from '../../shared/types';
-import { appSettings } from '../api/AppSettings';
+import { appSettings } from '../settings/AppSettings';
 
 const createMenu = (mainWindow: BrowserWindow) => {
   const profile = appSettings.getSelectedProfile();

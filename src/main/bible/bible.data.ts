@@ -3,7 +3,7 @@ import path from 'path';
 import { BibleData } from '../../shared/types';
 import { getResourcePath } from '../utils';
 
-const loadBible = (filePath: string) => {
+const loadBible = async (filePath: string) => {
   let data = fs.readFileSync(filePath, { encoding: 'utf-8' });
   data = data.substring(data.indexOf('Gen 1:1')).trim();
   const lines = data.split('\n');
@@ -26,15 +26,16 @@ const loadBible = (filePath: string) => {
   return bible;
 };
 
-const reloadBible = () => {
+const reloadBible = async () => {
   BIBLE_DATA = {
-    zh: loadBible(path.join(getResourcePath('hgb-utf8.txt'))),
-    en: loadBible(path.join(getResourcePath('esv-utf8.txt'))),
+    zh: await loadBible(path.join(getResourcePath('hgb-utf8.txt'))),
+    en: await loadBible(path.join(getResourcePath('esv-utf8.txt'))),
   };
 };
+const getBibleData = () => BIBLE_DATA;
 
 let BIBLE_DATA: { zh: BibleData; en: BibleData };
 
 reloadBible();
 
-export { BIBLE_DATA, reloadBible };
+export { getBibleData, reloadBible };

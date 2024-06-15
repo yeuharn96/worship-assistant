@@ -26,7 +26,7 @@ const defaultProfile: Profile = {
   bgColor: '#000000',
   bgImage: undefined,
   spacing: 8,
-  title: { size: 56, color: '#ffff00', font: ZH_FONTS[0], show: true },
+  title: { size: 56, color: '#ffff00', font: ZH_FONTS[0], underline: true, show: true },
   num: { size: 54, color: '#ffff00', font: 'Verdana' },
   zh: { size: 18, color: '#ffffff', font: ZH_FONTS[0], show: true },
   en: { size: 56, color: '#ffff00', font: 'Yu Gothic', show: true },
