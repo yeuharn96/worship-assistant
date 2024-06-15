@@ -1,17 +1,26 @@
 import { FC } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
-import { EN_FONTS, ZH_FONTS } from '@renderer/lib/constants';
 import InputNumber from '../ui/input-number';
 import useProfileStore from '@renderer/store/profile';
 import { FilePlus, XCircle } from 'lucide-react';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { toast } from 'sonner';
+import useModalStore from '@renderer/store/modal';
+import TextSettingItem from './TextSettingItem';
+import useOutputStore from '@renderer/store/output';
 
 const TextSettingPane = () => {
   const profile = useProfileStore();
-  const { setProfile, setTextSetting } = profile;
+  const { openGlobalModal } = useModalStore();
+  const { isShowing } = useOutputStore();
+  const { getProfile, setProfile, setTextSetting } = profile;
   const { title, num, zh, en } = profile;
+
+  const handleTextSettingChange = (...args: Parameters<typeof setTextSetting>) => {
+    setTextSetting(...args);
+    isShowing && window.api.applyOutputSettings(getProfile());
+  };
 
   return (
     <div>
@@ -26,29 +35,36 @@ const TextSettingPane = () => {
         color={title.color}
         size={title.size}
         font={title.font}
-        onChange={(value) => setTextSetting('title', value)}
+        onChange={(value) => handleTextSettingChange('title', value)}
       />
       <TextSettingItem
         name='No.'
         color={num.color}
         size={num.size}
         font={num.font}
-        onChange={(value) => setTextSetting('num', value)}
+        onChange={(value) => handleTextSettingChange('num', value)}
       />
       <TextSettingItem
         name='ZH'
         color={zh.color}
         size={zh.size}
         font={zh.font}
-        onChange={(value) => setTextSetting('zh', value)}
+        onChange={(value) => handleTextSettingChange('zh', value)}
       />
       <TextSettingItem
         name='EN'
         color={en.color}
         size={en.size}
         font={en.font}
-        onChange={(value) => setTextSetting('en', value)}
+        onChange={(value) => handleTextSettingChange('en', value)}
       />
+      <Button
+        variant='border'
+        className='block py-0.5 w-full h-auto mb-2'
+        onClick={() => openGlobalModal({ name: 'bible-text-settings' })}
+      >
+        More Settings...
+      </Button>
       <div className='border-b-2 border-gray-600 mb-2' />
       <div className='flex mb-2'>
         <div className='flex-[1] pr-2'>Background</div>
@@ -103,9 +119,9 @@ const TextSettingPane = () => {
               ...(profile.en.show ? ['en'] : []),
             ]}
             onValueChange={(val) => {
-              setTextSetting('title', { show: val.includes('title') });
-              setTextSetting('zh', { show: val.includes('zh') });
-              setTextSetting('en', { show: val.includes('en') });
+              handleTextSettingChange('title', { show: val.includes('title') });
+              handleTextSettingChange('zh', { show: val.includes('zh') });
+              handleTextSettingChange('en', { show: val.includes('en') });
             }}
           >
             <ToggleGroupItem value='zh' aria-label='Toggle ZH' className='border-2 border-gray-400'>
@@ -119,59 +135,6 @@ const TextSettingPane = () => {
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
-      </div>
-    </div>
-  );
-};
-
-type TextSettingItemProps = {
-  name: string;
-  color: string;
-  size: number;
-  font: string;
-  onChange?: (value: { color: string; size: number; font: string }) => void;
-};
-const TextSettingItem: FC<TextSettingItemProps> = ({ name, color, size, font, onChange }) => {
-  return (
-    <div className='flex my-2'>
-      <div className='flex-[1] pr-1'>{name}</div>
-      <div className='flex-[1] px-1'>
-        <input
-          type='color'
-          className='px-0.5 rounded focus:outline-blue-400 w-full'
-          value={color}
-          onChange={(e) => onChange && onChange({ color: e.target.value, size, font })}
-        />
-      </div>
-      <div className='flex-[1] px-1'>
-        <InputNumber
-          value={size}
-          min={1}
-          max={999}
-          onChange={(newSize) => onChange && onChange({ color, size: newSize, font })}
-        />
-      </div>
-      <div className='flex-[2] pl-1'>
-        <select
-          className='input-primary'
-          value={font}
-          onChange={(e) => onChange && onChange({ color, size, font: e.target.value })}
-        >
-          <optgroup label='ZH'>
-            {ZH_FONTS.map((_font) => (
-              <option key={`${name}-${_font}`} value={_font}>
-                {_font}
-              </option>
-            ))}
-          </optgroup>
-          <optgroup label='EN'>
-            {EN_FONTS.map((_font) => (
-              <option key={`${name}-${_font}`} value={_font}>
-                {_font}
-              </option>
-            ))}
-          </optgroup>
-        </select>
       </div>
     </div>
   );

@@ -136,11 +136,11 @@ const ControlPanel = () => {
         </Tabs>
       </div>
       <div className='flex-[2]'>
-        <div className='py-1 px-4 mb-4'>
+        <div className='pt-0 pb-1 px-4 mb-2'>
           <Button
             variant='border'
             size='block'
-            className='text-4xl mt-4 py-[5vh] disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-inherit'
+            className='text-4xl mt-3 py-[5vh] disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-inherit'
             onClick={showOutput}
             title={mode === 'video' && !playingVideo ? 'Please select a video first' : ''}
             disabled={mode === 'video' && !playingVideo}

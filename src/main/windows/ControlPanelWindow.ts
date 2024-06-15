@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
-import { appSettings } from '../api/AppSettings';
+import { appSettings } from '../settings/AppSettings';
 import { Profile } from '../../shared/types';
 import createMenu from './createMenu';
 

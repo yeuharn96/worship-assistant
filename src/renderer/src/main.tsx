@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import './assets/index.css';
 import ControlPanel from './windows/ControlPanel';
 import { Toaster } from './components/ui/sonner';
+import GlobalModal from './components/GlobalModal';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -18,6 +19,7 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
       gap={8}
       visibleToasts={4}
     />
+    <GlobalModal />
   </React.StrictMode>,
 );
 

@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
-import invokeHandlers from './handlers/invokeHandlers';
-import sendHandlers from './handlers/sendHandlers';
+import invokeHandlers from './invokeHandlers';
+import sendHandlers from './sendHandlers';
 
 const setupMainHandlers = () => {
   Object.keys(invokeHandlers).forEach((key) => {
