@@ -6,5 +6,10 @@ let SYSTEM_FONTS: string[];
 })();
 
 export const fontsHandler = {
-  getSystemFonts: () => SYSTEM_FONTS,
+  getSystemFonts: async () => {
+    if (!SYSTEM_FONTS) {
+      return await getFonts({ disableQuoting: true });
+    }
+    return SYSTEM_FONTS;
+  },
 };
