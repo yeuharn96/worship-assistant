@@ -1,9 +1,12 @@
-import { RotateCcw, RotateCw } from 'lucide-react';
+import { RotateCcw, RotateCw, Settings } from 'lucide-react';
 import InputNumber from './ui/input-number';
 import useProfileStore from '@renderer/store/profile';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
+import { Button } from './ui/button';
+import useModalStore from '@renderer/store/modal';
 
 const AdvanceSettingPane = () => {
+  const { openGlobalModal } = useModalStore();
   const { adjustment, scrollUnit, mode, skipSeconds, loop, playNext, setAdjustment, setProfile } = useProfileStore();
 
   return (
@@ -27,6 +30,11 @@ const AdvanceSettingPane = () => {
               max={9999}
               onChange={(value) => setAdjustment({ left: value })}
             />
+          </div>
+          <div className='flex justify-center items-end w-1/3'>
+            <Button variant='border' onClick={() => openGlobalModal({ name: 'output-adjustment' })}>
+              <Settings />
+            </Button>
           </div>
           <div className='ml-auto w-1/3 text-center'>
             <div>right</div>
