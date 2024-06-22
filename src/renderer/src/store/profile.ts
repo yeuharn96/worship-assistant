@@ -18,7 +18,6 @@ export interface ProfileState extends Profile {
 
 const defaultProfile: Profile = {
   profile: { id: crypto.randomUUID(), name: 'default', selected: true },
-  adjustment: { top: 0, bottom: 0, left: 0, right: 0 },
   mode: 'bible',
 
   // bible
@@ -38,6 +37,12 @@ const defaultProfile: Profile = {
   loop: false,
   playNext: false,
   skipSeconds: 5,
+
+  // adjustment
+  showGrid: true,
+  splitAdjBg: false,
+  adjustment: { top: 0, bottom: 0, left: 0, right: 0 },
+  adjustmentBg: { top: 0, bottom: 0, left: 0, right: 0 },
 };
 
 const useProfileStore = create<ProfileState>()((set, get) => ({
