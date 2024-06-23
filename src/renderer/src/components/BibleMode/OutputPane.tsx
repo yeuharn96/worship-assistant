@@ -102,7 +102,28 @@ const OutputPane: FC<Props> = ({
 
   return (
     <div className='relative'>
-      <div className='absolute' style={getCanvasStyle(profile, outputSize, scale)}>
+      {profile.splitAdjBg && (
+        <div
+          className='div-bg absolute'
+          style={getCanvasStyle({
+            adjustment: profile.adjustmentBg,
+            bgColor: profile.bgColor,
+            bgImage: profile.bgImage,
+            outputSize,
+            scale,
+          })}
+        />
+      )}
+      <div
+        className='div-output absolute'
+        style={getCanvasStyle({
+          adjustment: profile.adjustment,
+          bgColor: profile.splitAdjBg ? 'transparent' : profile.bgColor,
+          ...(!profile.splitAdjBg && { bgImage: profile.bgImage }),
+          outputSize,
+          scale,
+        })}
+      >
         {profile.title.show && <ContentTitle profile={profile} book={book} chapter={chapter} />}
         <div
           ref={contentRef}

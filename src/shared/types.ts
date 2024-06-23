@@ -56,8 +56,9 @@ export type Profile = {
   // adjustment
   showGrid: boolean;
   splitAdjBg: boolean;
+  previewAdjBg: boolean;
   adjustment: Adjustment;
-  adjustmentBg: Adjustment;
+  adjustmentBg: Adjustment; // will use this when `splitAdjBg` === true
 };
 
 export type Video = { path: string; name: string };
