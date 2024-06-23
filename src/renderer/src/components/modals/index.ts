@@ -1,5 +1,5 @@
 import BibleTextSettingsModal from './BibleTextSettingsModal';
-import OutputAdjustmentModal from './OutputAdjustmentModal';
+import OutputAdjustmentModal from './OutputAdjustmentModal/OutputAdjustmentModal';
 
 const modals = {
   'bible-text-settings': BibleTextSettingsModal,

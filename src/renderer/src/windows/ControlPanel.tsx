@@ -58,6 +58,10 @@ const ControlPanel = () => {
     };
   }, [profile]);
 
+  useEffect(() => {
+    if (isShowing) window.api.applyOutputSettings(profile);
+  }, [profile]);
+
   const hideOutput = () => {
     if (!isShowing) return;
     window.api.hideOutput();

@@ -6,14 +6,12 @@ import TextSettingItem from '../BibleMode/TextSettingItem';
 import { Button } from '../ui/button';
 import useModalStore from '@renderer/store/modal';
 import ContentTitle from '../BibleMode/ContentTitle';
-import useOutputStore from '@renderer/store/output';
 import { useOutputDimension } from '@renderer/hooks/useOutputDimension';
 
 const BibleTextSettingsModal = () => {
   const { dimension } = useOutputDimension();
   const { getProfile, setTextSetting } = useProfileStore();
   const { closeGlobalModal } = useModalStore();
-  const { isShowing } = useOutputStore();
   const profile = getProfile();
 
   const [previewText, setPreviewText] = useState({
@@ -32,11 +30,6 @@ const BibleTextSettingsModal = () => {
     })();
   }, []);
 
-  const handleTextSettingChange = (...args: Parameters<typeof setTextSetting>) => {
-    setTextSetting(...args);
-    isShowing && window.api.applyOutputSettings(getProfile());
-  };
-
   return (
     <div className='w-[95vw] h-[90vh] flex flex-col'>
       <div className='text-2xl font-bold ml-6 mt-3'>More Settings</div>
@@ -47,7 +40,7 @@ const BibleTextSettingsModal = () => {
           }
         }}
         className='w-[90vw] mt-4 mx-auto h-[30vh] overflow-auto'
-        style={getCanvasBackground(profile)}
+        style={getCanvasBackground(profile.bgColor, profile.bgImage)}
       >
         {profile.title.show && (
           <ContentTitle
@@ -83,27 +76,17 @@ const BibleTextSettingsModal = () => {
           {...profile.title}
           name='Title'
           extended
-          onChange={(value) => handleTextSettingChange('title', value)}
+          onChange={(value) => setTextSetting('title', value)}
         />
         <TextSettingItem
           {...profile.num}
           name='No.'
           extended
           hideShowToggle
-          onChange={(value) => handleTextSettingChange('num', value)}
+          onChange={(value) => setTextSetting('num', value)}
         />
-        <TextSettingItem
-          {...profile.zh}
-          name='ZH'
-          extended
-          onChange={(value) => handleTextSettingChange('zh', value)}
-        />
-        <TextSettingItem
-          {...profile.en}
-          name='EN'
-          extended
-          onChange={(value) => handleTextSettingChange('en', value)}
-        />
+        <TextSettingItem {...profile.zh} name='ZH' extended onChange={(value) => setTextSetting('zh', value)} />
+        <TextSettingItem {...profile.en} name='EN' extended onChange={(value) => setTextSetting('en', value)} />
       </div>
       <div className='flex mt-auto mb-4 justify-center'>
         <Button variant='secondary' className='px-20' onClick={closeGlobalModal}>

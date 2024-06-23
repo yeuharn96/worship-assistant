@@ -1,26 +1,17 @@
-import { FC } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import InputNumber from '../ui/input-number';
 import useProfileStore from '@renderer/store/profile';
-import { FilePlus, XCircle } from 'lucide-react';
 import { Button } from '../ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { toast } from 'sonner';
 import useModalStore from '@renderer/store/modal';
 import TextSettingItem from './TextSettingItem';
-import useOutputStore from '@renderer/store/output';
+import ChangeBackgroundImageButton from '../ui/ChangeBackgroundImageButton';
 
 const TextSettingPane = () => {
   const profile = useProfileStore();
   const { openGlobalModal } = useModalStore();
-  const { isShowing } = useOutputStore();
-  const { getProfile, setProfile, setTextSetting } = profile;
+  const { setProfile, setTextSetting } = profile;
   const { title, num, zh, en } = profile;
-
-  const handleTextSettingChange = (...args: Parameters<typeof setTextSetting>) => {
-    setTextSetting(...args);
-    isShowing && window.api.applyOutputSettings(getProfile());
-  };
 
   return (
     <div>
@@ -35,28 +26,28 @@ const TextSettingPane = () => {
         color={title.color}
         size={title.size}
         font={title.font}
-        onChange={(value) => handleTextSettingChange('title', value)}
+        onChange={(value) => setTextSetting('title', value)}
       />
       <TextSettingItem
         name='No.'
         color={num.color}
         size={num.size}
         font={num.font}
-        onChange={(value) => handleTextSettingChange('num', value)}
+        onChange={(value) => setTextSetting('num', value)}
       />
       <TextSettingItem
         name='ZH'
         color={zh.color}
         size={zh.size}
         font={zh.font}
-        onChange={(value) => handleTextSettingChange('zh', value)}
+        onChange={(value) => setTextSetting('zh', value)}
       />
       <TextSettingItem
         name='EN'
         color={en.color}
         size={en.size}
         font={en.font}
-        onChange={(value) => handleTextSettingChange('en', value)}
+        onChange={(value) => setTextSetting('en', value)}
       />
       <Button
         variant='border'
@@ -119,9 +110,9 @@ const TextSettingPane = () => {
               ...(profile.en.show ? ['en'] : []),
             ]}
             onValueChange={(val) => {
-              handleTextSettingChange('title', { show: val.includes('title') });
-              handleTextSettingChange('zh', { show: val.includes('zh') });
-              handleTextSettingChange('en', { show: val.includes('en') });
+              setTextSetting('title', { show: val.includes('title') });
+              setTextSetting('zh', { show: val.includes('zh') });
+              setTextSetting('en', { show: val.includes('en') });
             }}
           >
             <ToggleGroupItem value='zh' aria-label='Toggle ZH' className='border-2 border-gray-400'>
@@ -137,53 +128,6 @@ const TextSettingPane = () => {
         </div>
       </div>
     </div>
-  );
-};
-
-type ChangeBackgroundImageButtonProps = {
-  bgImage?: string;
-  onChange: (image?: string) => void;
-};
-const ChangeBackgroundImageButton: FC<ChangeBackgroundImageButtonProps> = ({ bgImage, onChange }) => {
-  const handleChangeBackgroundImage = async () => {
-    const image = await window.api.askImageDialog();
-    if (image) onChange(image);
-  };
-
-  if (bgImage) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant='border'
-              className='py-1 px-0 w-full leading-none h-7'
-              title={!bgImage ? 'Select an image as background' : ''}
-              onClick={handleChangeBackgroundImage}
-            >
-              <img src={`image:///${bgImage}`} className='max-w-full max-h-full' />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className='bg-gray-800 max-w-[20vw] max-h-[20vh] px-[1vw] py-[1vh] relative'>
-            <div title='Remove background image' onClick={() => onChange(undefined)}>
-              <XCircle className='text-red-700 bg-gray-200 rounded-full absolute right-[0vw] top-[0vh] cursor-pointer' />
-            </div>
-            <img src={`image:///${bgImage}`} className='max-w-[18vw] max-h-[18vh]' />
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-
-  return (
-    <Button
-      variant='border'
-      className='py-1 px-0 w-full leading-none h-7'
-      title='Select an image as background'
-      onClick={handleChangeBackgroundImage}
-    >
-      <FilePlus className='max-h-full max-w-full inline-block' />
-    </Button>
   );
 };
 

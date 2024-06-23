@@ -1,5 +1,5 @@
 import { CSSProperties } from 'react';
-import { TextSetting, Profile, Size, Scale } from 'src/shared/types';
+import { TextSetting, Size, Scale, Adjustment } from 'src/shared/types';
 
 export const getTextSettingStyle = (setting: Omit<TextSetting, 'show'>): CSSProperties => ({
   color: setting.color,
@@ -18,8 +18,15 @@ export const getElementHeights = (titleSetting: TextSetting) => {
   return { title, body };
 };
 
-export const getCanvasStyle = (profile: Profile, outputSize: Size, scale?: Scale): CSSProperties => {
-  const { top, bottom, left, right } = profile.adjustment;
+export const getCanvasStyle = (canvasProps: {
+  adjustment: Adjustment;
+  bgColor?: string;
+  bgImage?: string;
+  outputSize?: Size;
+  scale?: Scale;
+}): CSSProperties => {
+  const { adjustment, bgColor, bgImage, outputSize, scale } = canvasProps;
+  const { top, bottom, left, right } = adjustment;
 
   const scaleX = scale?.x ?? 1;
   const scaleY = scale?.y ?? 1;
@@ -28,18 +35,19 @@ export const getCanvasStyle = (profile: Profile, outputSize: Size, scale?: Scale
     bottom: `${bottom * scaleY}px`,
     left: `${left * scaleX}px`,
     right: `${right * scaleX}px`,
-    width: `${outputSize.width - left - right}px`,
-    height: `${outputSize.height - top - bottom}px`,
-    ...getCanvasBackground(profile),
-    ...(scale && { transform: `scale(${scaleX}, ${scaleY})` }),
-    transformOrigin: 'top left',
+    ...(outputSize && {
+      width: `${outputSize.width - left - right}px`,
+      height: `${outputSize.height - top - bottom}px`,
+    }),
+    ...(bgColor && getCanvasBackground(bgColor, bgImage)),
+    ...(scale && { transform: `scale(${scaleX}, ${scaleY})`, transformOrigin: 'top left' }),
   };
 };
 
-export const getCanvasBackground = (profile: Profile) => ({
-  backgroundColor: profile.bgColor,
-  ...(profile.bgImage && {
-    backgroundImage: `url("image:///${profile.bgImage}")`,
+export const getCanvasBackground = (bgColor: string, bgImage?: string): CSSProperties => ({
+  backgroundColor: bgColor,
+  ...(bgImage && {
+    backgroundImage: `url("image:///${bgImage}")`,
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
   }),
