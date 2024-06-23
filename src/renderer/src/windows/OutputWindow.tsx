@@ -4,6 +4,7 @@ import useProfileStore from '@renderer/store/profile';
 import OutputPane from '@renderer/components/BibleMode/OutputPane';
 import { useIpcListeners } from '@renderer/lib/ipc';
 import VideoOutput from '@renderer/components/VideoMode/VideoOutput';
+import { getCanvasStyle } from '@renderer/lib/getCssStyles';
 
 const OutputWindow: FC = () => {
   const profile = useProfileStore();
@@ -45,19 +46,41 @@ const OutputWindow: FC = () => {
 
   return (
     <div className='overflow-hidden fixed top-0 bottom-0 left-0 right-0 cursor-none'>
-      {profile.mode === 'bible' && (
-        <OutputPane
-          selectedPassage={{ book, chapter, verse }}
-          profile={profile}
-          outputSize={dimension ?? { width: 0, height: 0 }}
-          scrollToVerse={scrollToVerse}
-          onScrollToVerse={() => setScrollToVerse(false)}
-          scrollOffset={scrollOffset}
-          onScrollOffset={() => setScrollOffset(undefined)}
-          onScrollInfoChanged={window.api.syncOutputScroll}
-        />
-      )}
-      {profile.mode === 'video' && <VideoOutput />}
+      <div className='relative'>
+        {profile.splitAdjBg && (
+          <div
+            className='div-bg absolute'
+            style={getCanvasStyle({
+              adjustment: profile.adjustmentBg,
+              bgColor: profile.bgColor,
+              bgImage: profile.bgImage,
+              outputSize: dimension,
+            })}
+          />
+        )}
+        <div
+          className='div-output absolute'
+          style={getCanvasStyle({
+            adjustment: profile.adjustment,
+            bgColor: profile.splitAdjBg ? 'transparent' : profile.bgColor,
+            ...(!profile.splitAdjBg && { bgImage: profile.bgImage }),
+            outputSize: dimension,
+          })}
+        >
+          {profile.mode === 'bible' && (
+            <OutputPane
+              selectedPassage={{ book, chapter, verse }}
+              profile={profile}
+              scrollToVerse={scrollToVerse}
+              onScrollToVerse={() => setScrollToVerse(false)}
+              scrollOffset={scrollOffset}
+              onScrollOffset={() => setScrollOffset(undefined)}
+              onScrollInfoChanged={window.api.syncOutputScroll}
+            />
+          )}
+          {profile.mode === 'video' && <VideoOutput />}
+        </div>
+      </div>
     </div>
   );
 };

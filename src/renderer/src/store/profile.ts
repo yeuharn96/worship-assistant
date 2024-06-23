@@ -7,6 +7,7 @@ export interface ProfileState extends Profile {
 
   setProfile: (p: Partial<Profile>) => void;
   setAdjustment: (adj: Partial<Adjustment>) => void;
+  setAdjustmentBg: (adj: Partial<Adjustment>) => void;
 
   // bible
   setTextSetting: (field: 'title' | 'num' | 'zh' | 'en', setting: Partial<TextSetting>) => void;
@@ -18,7 +19,6 @@ export interface ProfileState extends Profile {
 
 const defaultProfile: Profile = {
   profile: { id: crypto.randomUUID(), name: 'default', selected: true },
-  adjustment: { top: 0, bottom: 0, left: 0, right: 0 },
   mode: 'bible',
 
   // bible
@@ -38,19 +38,35 @@ const defaultProfile: Profile = {
   loop: false,
   playNext: false,
   skipSeconds: 5,
+
+  // adjustment
+  showGrid: true,
+  splitAdjBg: false,
+  previewAdjBg: false,
+  adjustment: { top: 0, bottom: 0, left: 0, right: 0 },
+  adjustmentBg: { top: 0, bottom: 0, left: 0, right: 0 },
 };
 
 const useProfileStore = create<ProfileState>()((set, get) => ({
   ...defaultProfile,
 
   getProfile: () => {
-    const { setProfile, setAdjustment, setTextSetting, addPlaylistItems, removePlaylistItem, getProfile, ...profile } =
-      get();
+    const {
+      setProfile,
+      setAdjustment,
+      setAdjustmentBg,
+      setTextSetting,
+      addPlaylistItems,
+      removePlaylistItem,
+      getProfile,
+      ...profile
+    } = get();
     return profile;
   },
 
   setProfile: (p) => set((state) => ({ ...state, ...p })),
   setAdjustment: (adj) => set((state) => ({ ...state, adjustment: { ...state.adjustment, ...adj } })),
+  setAdjustmentBg: (adj) => set((state) => ({ ...state, adjustmentBg: { ...state.adjustmentBg, ...adj } })),
   setTextSetting: (field, setting) => set((state) => ({ ...state, [field]: { ...state[field], ...setting } })),
   addPlaylistItems: (items) => set((state) => ({ ...state, playlist: [...state.playlist, ...items] })),
   removePlaylistItem: (item) => set((state) => ({ ...state, playlist: state.playlist.filter((i) => i !== item) })),

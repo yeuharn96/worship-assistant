@@ -32,7 +32,6 @@ export type TextSetting = {
 export type Adjustment = { top: number; bottom: number; left: number; right: number };
 export type Profile = {
   profile: { id: string; name: string; selected: boolean };
-  adjustment: Adjustment;
   mode: 'bible' | 'video';
 
   // bible
@@ -53,6 +52,13 @@ export type Profile = {
   loop: boolean;
   playNext: boolean;
   skipSeconds: number;
+
+  // adjustment
+  showGrid: boolean;
+  splitAdjBg: boolean;
+  previewAdjBg: boolean;
+  adjustment: Adjustment;
+  adjustmentBg: Adjustment; // will use this when `splitAdjBg` === true
 };
 
 export type Video = { path: string; name: string };
