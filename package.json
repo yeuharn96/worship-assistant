@@ -1,6 +1,6 @@
 {
   "name": "worship-assistant",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A simple app to assist worship service presentations",
   "main": "./out/main/index.js",
   "author": "yeuharn96",

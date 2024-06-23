@@ -1,18 +1,16 @@
 import { FC, useEffect, useRef, useState } from 'react';
-import { Chapter, Profile, Scale, ScriptureLocation, Size, WebContentEventListeners } from 'src/shared/types';
-import { getElementHeights, getCanvasStyle } from '@renderer/lib/getCssStyles';
+import { Chapter, Profile, ScriptureLocation, WebContentEventListeners } from 'src/shared/types';
+import { getElementHeights } from '@renderer/lib/getCssStyles';
 import ContentLine from './ContentLine';
 import ContentTitle from './ContentTitle';
 
 type Props = {
   selectedPassage: ScriptureLocation;
   profile: Profile;
-  outputSize: Size;
   scrollToVerse?: boolean;
   onScrollToVerse?: () => void;
   scrollOffset?: number;
   onScrollOffset?: () => void;
-  scale?: Scale;
   scrollbar?: boolean;
   onScrollInfoChanged?: WebContentEventListeners['syncOutputScroll'];
 };
@@ -20,12 +18,10 @@ type Props = {
 const OutputPane: FC<Props> = ({
   selectedPassage,
   profile,
-  outputSize,
   scrollToVerse = false,
   onScrollToVerse,
   scrollOffset,
   onScrollOffset,
-  scale,
   scrollbar = false,
   onScrollInfoChanged,
 }) => {
@@ -101,50 +97,27 @@ const OutputPane: FC<Props> = ({
   }, [scrollOffset]);
 
   return (
-    <div className='relative'>
-      {profile.splitAdjBg && (
-        <div
-          className='div-bg absolute'
-          style={getCanvasStyle({
-            adjustment: profile.adjustmentBg,
-            bgColor: profile.bgColor,
-            bgImage: profile.bgImage,
-            outputSize,
-            scale,
-          })}
-        />
-      )}
+    <>
+      {profile.title.show && <ContentTitle profile={profile} book={book} chapter={chapter} />}
       <div
-        className='div-output absolute'
-        style={getCanvasStyle({
-          adjustment: profile.adjustment,
-          bgColor: profile.splitAdjBg ? 'transparent' : profile.bgColor,
-          ...(!profile.splitAdjBg && { bgImage: profile.bgImage }),
-          outputSize,
-          scale,
-        })}
+        ref={contentRef}
+        className={`overflow-auto px-2 ${!scrollbar && 'no-scrollbar'}`}
+        style={getElementHeights(profile.title).body}
+        onScroll={scrollChangeEvent}
       >
-        {profile.title.show && <ContentTitle profile={profile} book={book} chapter={chapter} />}
-        <div
-          ref={contentRef}
-          className={`overflow-auto px-2 ${!scrollbar && 'no-scrollbar'}`}
-          style={getElementHeights(profile.title).body}
-          onScroll={scrollChangeEvent}
-        >
-          {getVerseNum().map((verseNum) => (
-            <div key={`${book}-${chapter}-${verseNum}`}>
-              <ContentLine
-                profile={profile}
-                verseNum={verseNum}
-                zhText={zhText && zhText[verseNum]}
-                enText={enText && enText[verseNum]}
-              />
-              <div style={{ height: `${profile.spacing}pt` }}></div>
-            </div>
-          ))}
-        </div>
+        {getVerseNum().map((verseNum) => (
+          <div key={`${book}-${chapter}-${verseNum}`}>
+            <ContentLine
+              profile={profile}
+              verseNum={verseNum}
+              zhText={zhText && zhText[verseNum]}
+              enText={enText && enText[verseNum]}
+            />
+            <div style={{ height: `${profile.spacing}pt` }}></div>
+          </div>
+        ))}
       </div>
-    </div>
+    </>
   );
 };
 

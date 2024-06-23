@@ -48,15 +48,13 @@ const VideoOutput = () => {
   }, [volume]);
 
   return (
-    <div className='w-full h-full bg-black'>
-      <video
-        id='video-output'
-        className='w-full h-full'
-        onTimeUpdate={updateVideoPlayState}
-        onCanPlay={updateVideoPlayState}
-        onEnded={() => window.api.signalVideoEnded()}
-      />
-    </div>
+    <video
+      id='video-output'
+      className='w-full h-full'
+      onTimeUpdate={updateVideoPlayState}
+      onCanPlay={updateVideoPlayState}
+      onEnded={() => window.api.signalVideoEnded()}
+    />
   );
 };
 
