@@ -9,7 +9,7 @@ type Props = {
   profile: Profile;
   scrollToVerse?: boolean;
   onScrollToVerse?: () => void;
-  scrollOffset?: number;
+  scrollOffset?: { top: number; behavior: ScrollBehavior };
   onScrollOffset?: () => void;
   scrollbar?: boolean;
   onScrollInfoChanged?: WebContentEventListeners['syncOutputScroll'];
@@ -89,11 +89,12 @@ const OutputPane: FC<Props> = ({
   }, [scrollToVerse]);
 
   useEffect(() => {
-    if (scrollOffset != undefined) {
-      contentRef.current?.scrollBy({ top: scrollOffset });
-      onScrollOffset && onScrollOffset();
-      scrollChangeEvent();
-    }
+    if (scrollOffset == undefined) return;
+
+    const behavior = scrollOffset.behavior || 'auto';
+    contentRef.current?.scrollBy({ top: scrollOffset.top, behavior });
+    onScrollOffset && onScrollOffset();
+    scrollChangeEvent();
   }, [scrollOffset]);
 
   return (

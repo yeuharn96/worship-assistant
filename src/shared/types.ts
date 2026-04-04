@@ -44,6 +44,7 @@ export type Profile = {
   zh: TextSetting;
   en: TextSetting;
   scrollUnit: number;
+  smoothScrolling: boolean;
 
   // video
   playlist: string[];
@@ -82,7 +83,7 @@ export type WebContentEventListeners = {
   // bible
   setBookTitleLanguage: (lang: 'en' | 'zh') => void;
   setOutputBibleText: (loc: ScriptureLocation) => void;
-  scrollOutputOffset: (offset: number) => void;
+  scrollOutputOffset: (offset: number, behavior?: ScrollBehavior) => void;
   syncOutputScroll: (
     scrollHeight: number,
     scrollTop: number,
