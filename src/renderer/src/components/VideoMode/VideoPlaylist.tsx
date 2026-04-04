@@ -50,7 +50,7 @@ const VideoPlaylist = () => {
     const selected = await window.api.askVideosDialog();
     const newVideos = [] as Video[];
     selected.forEach((vid) => {
-      if (!playlist.includes(vid.path)) {
+      if (playlistItems.every(item => item.path !== vid.path)) {
         newVideos.push(vid);
       } else {
         toast.error('Duplicate video', {
