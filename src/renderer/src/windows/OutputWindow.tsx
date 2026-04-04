@@ -11,7 +11,7 @@ const OutputWindow: FC = () => {
   const { book, chapter, verse, dimension, setOutput } = useOutputStore();
 
   const [scrollToVerse, setScrollToVerse] = useState(false);
-  const [scrollOffset, setScrollOffset] = useState<number>();
+  const [scrollOffset, setScrollOffset] = useState<{ top: number; behavior: ScrollBehavior }>();
 
   useIpcListeners({
     applyOutputSettings: (settings) => profile.setProfile(settings),
@@ -19,8 +19,8 @@ const OutputWindow: FC = () => {
       setOutput(loc);
       setScrollToVerse(true);
     },
-    scrollOutputOffset: (offset) => {
-      setScrollOffset(offset);
+    scrollOutputOffset: (offset, behavior = 'auto') => {
+      setScrollOffset({ top: offset, behavior });
     },
   });
 

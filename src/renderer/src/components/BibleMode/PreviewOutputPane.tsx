@@ -5,13 +5,14 @@ import { Button } from '../ui/button';
 import { CheckSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { useIpcListeners } from '@renderer/lib/ipc';
 import { cn } from '@renderer/lib/utils';
+import { Checkbox } from '../ui/checkbox';
 
 type Props = {
   show: boolean;
 };
 
 const PreviewOutputPane: FC<Props> = () => {
-  const { scrollUnit, zh, en } = useProfileStore();
+  const { scrollUnit, zh, en, smoothScrolling, setProfile } = useProfileStore();
   const { dimension, setOutput, isShowing, book, chapter, verse } = useOutputStore();
   const outputWrapperRef = useRef<HTMLDivElement>(null);
   const monitorRef = useRef<HTMLVideoElement>(null);
@@ -83,11 +84,11 @@ const PreviewOutputPane: FC<Props> = () => {
   };
 
   const scrollToPos = (pos: number) => {
-    window.api.scrollOutputOffset(pos - outputScrollInfo.scrollTop);
+    window.api.scrollOutputOffset(pos - outputScrollInfo.scrollTop, smoothScrolling ? 'smooth' : 'auto');
   };
 
   const scrollOffset = (offset: number) => {
-    window.api.scrollOutputOffset(offset);
+    window.api.scrollOutputOffset(offset, smoothScrolling ? 'smooth' : 'auto');
   };
 
   const scrollToNextVerse = (next: boolean) => {
@@ -199,11 +200,11 @@ const PreviewOutputPane: FC<Props> = () => {
 
       {isShowing && (
         <>
-          <div className='pt-[4vh] w-[30vw] flex'>
+          <div className='pt-[4vh] w-[30vw] flex space-x-4'>
             <Button
               variant='border'
               size='lg'
-              className='mx-2 pl-6 flex-1'
+              className='pl-6 flex-1'
               title='Scroll Up'
               onClick={() => scrollOffset(-scrollUnit)}
             >
@@ -212,18 +213,18 @@ const PreviewOutputPane: FC<Props> = () => {
             <Button
               variant='border'
               size='lg'
-              className='mx-2 pl-6 flex-1'
+              className='pl-6 flex-1'
               title='Scroll Down'
               onClick={() => scrollOffset(scrollUnit)}
             >
               <ChevronDown className='h-10 w-10' /> Scroll Down
             </Button>
           </div>
-          <div className='pt-[4vh] w-[30vw] flex'>
+          <div className='pt-[4vh] w-[30vw] flex space-x-4 relative'>
             <Button
               variant='border'
               size='lg'
-              className='mx-2 pl-6 flex-1'
+              className='pl-6 flex-1'
               title='Scroll To Previous Verse'
               onClick={() => scrollToNextVerse(false)}
             >
@@ -232,12 +233,28 @@ const PreviewOutputPane: FC<Props> = () => {
             <Button
               variant='border'
               size='lg'
-              className='mx-2 pl-6 flex-1'
+              className='pl-6 flex-1'
               title='Scroll To Next Verse'
               onClick={() => scrollToNextVerse(true)}
             >
               <ChevronDown className='h-10 w-10' /> Next Verse
             </Button>
+            <label 
+              className={cn(
+                'absolute w-auto h-auto left-full translate-y-1/2',
+                'flex items-center cursor-pointer'
+              )}
+            >
+                <Checkbox
+                  className={cn(
+                    'border-white mr-2 w-6 h-6',
+                    'data-[state=checked]:bg-white data-[state=checked]:text-primary'
+                  )}
+                  checked={smoothScrolling}
+                  onCheckedChange={(checked) => setProfile({ smoothScrolling: Boolean(checked) })}
+                />
+                <span className={cn('text-nowrap', smoothScrolling && 'font-bold')}>Smooth Scrolling</span>
+              </label>
           </div>
         </>
       )}
