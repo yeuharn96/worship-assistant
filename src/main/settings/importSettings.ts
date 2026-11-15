@@ -1,0 +1,113 @@
+import { BrowserWindow, dialog } from 'electron';
+import { copyFileSync, existsSync, readFileSync } from 'fs';
+import crypto from 'crypto';
+import { basename, dirname, extname, join, resolve } from 'path';
+import { is } from '@electron-toolkit/utils';
+import { Profile } from '../../shared/types';
+import { getDataPath } from '../utils';
+import { fileHandler } from '../ipc/handlers/fileHandler';
+import sendHandlers from '../ipc/sendHandlers';
+import { appSettings, isValidProfiles } from './AppSettings';
+
+const TITLE = 'Import Settings';
+
+/** Accepts the previous version's app folder (with `data/` inside) or its `data` folder itself. */
+const findSettingsFile = (folder: string) =>
+  [join(folder, 'data', 'settings.json'), join(folder, 'settings.json')].find((p) => existsSync(p));
+
+/**
+ * Copy a profile's background image into this version's data folder. Saved paths are absolute and may point into an
+ * even older version's folder, so also look for the file by name in the selected version's data folder.
+ */
+const copyBackgroundImage = (bgImage: string, oldDataFolder: string) => {
+  const source = [bgImage, join(oldDataFolder, basename(bgImage))].find((p) => existsSync(p));
+  if (!source) return undefined;
+
+  try {
+    const dest = getDataPath(`${crypto.randomUUID()}${extname(source)}`);
+    copyFileSync(source, dest);
+    return dest.replaceAll('\\', '/');
+  } catch (e) {
+    console.error('Unable to copy background image', e);
+    return undefined;
+  }
+};
+
+/** Ask for a previous version's folder and replace the current settings with its settings. Returns true if imported. */
+export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindow) => {
+  const showError = async (message: string, detail?: string) => {
+    await dialog.showMessageBox(mainWindow, { type: 'error', title: TITLE, message, detail });
+    return false;
+  };
+
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+    title: 'Select the folder of your previous Worship Assistant version',
+    properties: ['openDirectory'],
+  });
+  if (canceled || !filePaths[0]) return false;
+
+  const settingsFile = findSettingsFile(filePaths[0]);
+  if (!settingsFile) {
+    return showError(
+      'No saved settings were found in this folder.',
+      'Select the folder of your previous version that contains "Worship Assistant.exe" (or its "data" folder).',
+    );
+  }
+  if (resolve(settingsFile) === resolve(getDataPath('settings.json'))) {
+    return showError('This is the folder of the version you are running now.', 'Select the previous version’s folder.');
+  }
+
+  let profiles: Profile[];
+  try {
+    profiles = JSON.parse(readFileSync(settingsFile, { encoding: 'utf-8' }))?.profiles;
+  } catch {
+    return showError('The saved settings in this folder could not be read.', settingsFile);
+  }
+  if (!isValidProfiles(profiles) || profiles.length === 0) {
+    return showError('The saved settings in this folder could not be read.', settingsFile);
+  }
+
+  const { response } = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    title: TITLE,
+    buttons: ['Import', 'Cancel'],
+    defaultId: 0,
+    cancelId: 1,
+    message: 'Replace your current settings?',
+    detail: `Your current text settings, playlist and background image will be replaced with the ones from:\n${dirname(settingsFile)}`,
+  });
+  if (response !== 0) return false;
+
+  const oldDataFolder = dirname(settingsFile);
+  let missingImages = 0;
+  const importedProfiles = profiles.map((profile) => {
+    if (!profile.bgImage) return profile;
+    const bgImage = copyBackgroundImage(profile.bgImage, oldDataFolder);
+    if (!bgImage) missingImages++;
+    return { ...profile, bgImage };
+  });
+
+  // Background images of the replaced settings are no longer used.
+  appSettings.getProfiles().forEach((p) => p.bgImage && fileHandler.removeFromDataFolder(p.bgImage));
+
+  appSettings.replaceProfiles(importedProfiles);
+  try {
+    !is.dev && appSettings.writeSaveFile();
+  } catch (e) {
+    console.error('Unable to save imported settings', e);
+  }
+
+  const profile = appSettings.getSelectedProfile() ?? importedProfiles[0];
+  sendHandlers.loadProfile(profile);
+
+  await dialog.showMessageBox(mainWindow, {
+    type: 'info',
+    title: TITLE,
+    message: 'Settings imported.',
+    detail:
+      missingImages > 0
+        ? 'The background image could not be found in the previous version’s folder, so it was removed. You can set it again under Background.'
+        : undefined,
+  });
+  return true;
+};

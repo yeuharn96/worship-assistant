@@ -80,6 +80,8 @@ export type VersePos = { verse: string; scrollTop: number };
 export type WebContentEventListeners = {
   hideOutput: () => void;
   applyOutputSettings: (settings: Profile) => void;
+  /** Replace the control panel's profile, e.g. after importing settings. */
+  loadProfile: (profile: Profile) => void;
   monitorOutput: (sourceId?: string) => void;
   setOutputDimension: (size: Size) => void;
 

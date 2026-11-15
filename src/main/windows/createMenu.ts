@@ -1,6 +1,7 @@
 import { BrowserWindow, Menu } from 'electron';
 import { WebContentEventListeners } from '../../shared/types';
 import { appSettings } from '../settings/AppSettings';
+import { importSettingsFromPreviousVersion } from '../settings/importSettings';
 
 const createMenu = (mainWindow: BrowserWindow) => {
   const profile = appSettings.getSelectedProfile();
@@ -32,6 +33,18 @@ const createMenu = (mainWindow: BrowserWindow) => {
           type: 'radio',
           checked: lang === 'zh',
           click: () => publishWebContentEvent(mainWindow, 'setBookTitleLanguage', 'zh'),
+        },
+      ],
+    },
+    {
+      label: 'Settings',
+      submenu: [
+        {
+          label: 'Import from Previous Version…',
+          click: async () => {
+            // Rebuild so the Language menu reflects the imported settings.
+            if (await importSettingsFromPreviousVersion(mainWindow)) createMenu(mainWindow);
+          },
         },
       ],
     },

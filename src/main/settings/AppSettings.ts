@@ -18,6 +18,9 @@ const isValidWindowState = (value: any): value is WindowState =>
   typeof value?.isMaximized === 'boolean' &&
   ['x', 'y', 'width', 'height'].every((key) => Number.isFinite(value?.bounds?.[key]));
 
+export const isValidProfiles = (value: any): value is Profile[] =>
+  Array.isArray(value) && value.every((p) => typeof p?.profile?.id === 'string');
+
 class AppSettings {
   private static SETTINGS_FILE_PATH = getDataPath('settings.json');
   private static instance: AppSettings;
@@ -55,7 +58,7 @@ class AppSettings {
 
     const settings = tryParseJson(this.savedJson);
     const profiles = settings?.profiles;
-    if (Array.isArray(profiles) && profiles.every((p) => typeof p?.profile?.id === 'string')) {
+    if (isValidProfiles(profiles)) {
       this.profiles = profiles;
       if (isValidWindowState(settings.windowState)) this.windowState = settings.windowState;
       return;
@@ -102,6 +105,11 @@ class AppSettings {
   }
   public getSelectedProfile() {
     return this.profiles.find((p) => p.profile.selected);
+  }
+
+  /** Replace all profiles, e.g. when importing settings from a previous version. */
+  public replaceProfiles(profiles: Profile[]) {
+    this.profiles = profiles;
   }
 
   public selectProfile(id: string) {

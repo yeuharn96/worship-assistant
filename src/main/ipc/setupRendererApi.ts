@@ -26,6 +26,7 @@ const sendEvents: App.IpcRendererApi['send'] = {
   hideOutput: true,
   applyOutputSettings: true,
   monitorOutput: true,
+  loadProfile: true,
   setOutputDimension: true,
   setOutputBibleText: true,
   scrollOutputOffset: true,

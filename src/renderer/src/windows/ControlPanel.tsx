@@ -33,8 +33,12 @@ const ControlPanel = () => {
         setProfile({ lang });
       },
       setOutputDimension: (dimension) => setOutput({ dimension }),
+      loadProfile: (importedProfile) => {
+        setProfile(importedProfile);
+        if (!isShowing) setCurrentTab(importedProfile.mode);
+      },
     },
-    [mode],
+    [mode, isShowing],
   );
 
   useEffect(() => {

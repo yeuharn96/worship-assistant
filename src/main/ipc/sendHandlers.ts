@@ -33,6 +33,9 @@ const webContentEventHandlers: WebContentEventListeners = {
     getMainWindow()?.webContents.send('setOutputDimension', ...args);
     getOutputWindow()?.webContents.send('setOutputDimension', ...args);
   },
+  loadProfile: (...args) => {
+    getMainWindow()?.webContents.send('loadProfile', ...args);
+  },
   monitorOutput: () => {
     const srcId = getOutputWindow()?.getMediaSourceId();
     if (srcId) getMainWindow()?.webContents.send('monitorOutput', srcId);
