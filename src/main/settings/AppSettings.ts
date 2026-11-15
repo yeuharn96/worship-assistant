@@ -1,3 +1,4 @@
+import { Rectangle } from 'electron';
 import { Profile } from '../../shared/types';
 import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { getDataPath } from '../utils';
@@ -11,11 +12,18 @@ const tryParseJson = (json: string) => {
   }
 };
 
+export type WindowState = { bounds: Rectangle; isMaximized: boolean };
+
+const isValidWindowState = (value: any): value is WindowState =>
+  typeof value?.isMaximized === 'boolean' &&
+  ['x', 'y', 'width', 'height'].every((key) => Number.isFinite(value?.bounds?.[key]));
+
 class AppSettings {
   private static SETTINGS_FILE_PATH = getDataPath('settings.json');
   private static instance: AppSettings;
   private savedJson: string = '';
   private profiles: Profile[] = [];
+  private windowState?: WindowState;
 
   private constructor() {
     if (!AppSettings.instance) {
@@ -49,6 +57,7 @@ class AppSettings {
     const profiles = settings?.profiles;
     if (Array.isArray(profiles) && profiles.every((p) => typeof p?.profile?.id === 'string')) {
       this.profiles = profiles;
+      if (isValidWindowState(settings.windowState)) this.windowState = settings.windowState;
       return;
     }
 
@@ -76,6 +85,13 @@ class AppSettings {
     writeFileSync(tempPath, updatedJson, { encoding: 'utf-8' });
     renameSync(tempPath, filePath);
     this.savedJson = updatedJson;
+  }
+
+  public getWindowState() {
+    return this.windowState;
+  }
+  public setWindowState(windowState: WindowState) {
+    this.windowState = windowState;
   }
 
   public getProfiles() {
