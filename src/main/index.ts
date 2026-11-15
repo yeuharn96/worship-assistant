@@ -35,6 +35,8 @@ app.whenReady().then(() => {
   process.env.OUTPUT_WINDOW_ID = outputWindow.id.toString();
 
   // Follow the projector when displays are connected, disconnected or change resolution.
+  // display-metrics-changed also fires for taskbar, DPI and work-area changes, so only notify on a new size.
+  let lastSize = getOutputDisplay().size;
   const handleDisplayChanged = () => {
     const win = getOutputWindow();
     if (!win) return;
@@ -44,6 +46,8 @@ app.whenReady().then(() => {
     if (current.x !== x || current.y !== y || current.width !== width || current.height !== height) {
       moveOutputWindow(win, display);
     }
+    if (display.size.width === lastSize.width && display.size.height === lastSize.height) return;
+    lastSize = display.size;
     sendHandlers.setOutputDimension(display.size);
   };
   screen.on('display-added', handleDisplayChanged);

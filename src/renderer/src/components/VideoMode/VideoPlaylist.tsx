@@ -14,22 +14,44 @@ import { toast } from 'sonner';
 const VideoPlaylist = () => {
   const { playlist, addPlaylistItems, removePlaylistItem, setProfile } = useProfileStore();
   const { playingVideo, isShowing, setOutput } = useOutputStore();
-  // Lookup of every path seen so far: the video, or null if the file is missing.
-  const [videoInfo, setVideoInfo] = useState<Record<string, Video | null>>({});
+  // Lookup of every video found so far. Missing files are never cached, so they're checked again if re-added.
+  const [videoInfo, setVideoInfo] = useState<Record<string, Video>>({});
 
-  // The profile's playlist is the single source of truth; this only resolves names / existence for new paths.
+  // The profile's playlist is the single source of truth; this resolves names for new paths and drops missing files
+  // from the playlist, so Next/Prev and auto-advance never land on a video that can't play.
   useEffect(() => {
     const unknownPaths = playlist.filter((videoPath) => !(videoPath in videoInfo));
     if (unknownPaths.length === 0) return;
 
-    const getValidVideo = async (videoPath: string) => {
+    const getValidVideo = async (videoPath: string): Promise<Video | null> => {
       const exists = await window.api.checkFileExists(videoPath);
       if (!exists) return null;
       return { path: videoPath, name: await window.api.getFileName(videoPath) };
     };
     (async () => {
-      const entries = await Promise.all(unknownPaths.map(async (p) => [p, await getValidVideo(p)] as const));
-      setVideoInfo((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+      const results = await Promise.all(unknownPaths.map(async (p) => [p, await getValidVideo(p)] as const));
+      const found = results.filter((r): r is [string, Video] => r[1] !== null);
+      const missing = results.filter(([, video]) => video === null).map(([p]) => p);
+
+      if (found.length > 0) setVideoInfo((prev) => ({ ...prev, ...Object.fromEntries(found) }));
+      if (missing.length > 0) {
+        // Read the latest playlist: it may have changed while the files were being checked.
+        const latest = useProfileStore.getState().playlist;
+        setProfile({ playlist: latest.filter((p) => !missing.includes(p)) });
+        toast.warning(`${missing.length} video(s) could not be found and were removed from the playlist`, {
+          description: (
+            <ul>
+              {missing.map((p) => (
+                <li key={p} className='break-all'>
+                  {p}
+                </li>
+              ))}
+            </ul>
+          ),
+          closeButton: true,
+          duration: 10 * 1000,
+        });
+      }
     })();
   }, [playlist]);
 
@@ -80,9 +102,9 @@ const VideoPlaylist = () => {
     const reordered = playlistItems.map((i) => i.path);
     const [moved] = reordered.splice(source.index, 1);
     reordered.splice(destination.index, 0, moved);
-    // Missing files aren't shown; keep them at the end so they still come back if the file reappears.
-    const missing = playlist.filter((videoPath) => !videoInfo[videoPath]);
-    setProfile({ playlist: [...reordered, ...missing] });
+    // Keep paths that are still being checked; the check above removes them if they turn out to be missing.
+    const pending = playlist.filter((videoPath) => !(videoPath in videoInfo));
+    setProfile({ playlist: [...reordered, ...pending] });
   };
 
   return (

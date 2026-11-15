@@ -2,6 +2,7 @@ import { app, BrowserWindow, Display } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
 import sendHandlers from '../ipc/sendHandlers';
+import { getMainWindow } from './getWindows';
 
 let isQuitting = false;
 app.on('before-quit', () => (isQuitting = true));
@@ -27,9 +28,14 @@ export const createOutputWindow = (display: Display) => {
     },
   });
 
+  // Windows shutdown / restart / log off closes windows without emitting `before-quit`.
+  outputWindow.on('session-end', () => (isQuitting = true));
+
   // The output window lives for the whole session: closing it (e.g. Alt+F4) only hides it.
   outputWindow.on('close', (e) => {
-    if (isQuitting) return;
+    // Once the control panel is gone nothing can show the output again, so let it close.
+    const mainWindow = getMainWindow();
+    if (isQuitting || !mainWindow || mainWindow.isDestroyed()) return;
     e.preventDefault();
     sendHandlers.hideOutput();
   });

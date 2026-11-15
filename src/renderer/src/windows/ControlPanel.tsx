@@ -33,9 +33,17 @@ const ControlPanel = () => {
         setProfile({ lang });
       },
       setOutputDimension: (dimension) => setOutput({ dimension }),
+      // Only sent while the output is hidden: the main process blocks importing while it's showing.
       loadProfile: (importedProfile) => {
-        setProfile(importedProfile);
-        if (!isShowing) setCurrentTab(importedProfile.mode);
+        // The imported profile brings its own copy of its background, so the current one is no longer used.
+        // The main process can't remove it if it was picked this session, since it isn't saved until the app closes.
+        const { bgImage } = getProfile();
+        if (bgImage && bgImage !== importedProfile.bgImage) window.api.removeFromDataFolder(bgImage);
+
+        // settings.json leaves out a profile without a background, and setProfile only overwrites the keys it's
+        // given, so set bgImage explicitly or the (now deleted) current background would be kept.
+        setProfile({ ...importedProfile, bgImage: importedProfile.bgImage });
+        setCurrentTab(importedProfile.mode);
       },
     },
     [mode, isShowing],

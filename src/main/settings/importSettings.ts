@@ -1,12 +1,12 @@
 import { BrowserWindow, dialog } from 'electron';
-import { copyFileSync, existsSync, readFileSync } from 'fs';
-import crypto from 'crypto';
-import { basename, dirname, extname, join, resolve } from 'path';
+import { existsSync, readFileSync } from 'fs';
+import { basename, dirname, join, resolve } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { Profile } from '../../shared/types';
 import { getDataPath } from '../utils';
 import { fileHandler } from '../ipc/handlers/fileHandler';
 import sendHandlers from '../ipc/sendHandlers';
+import { getOutputWindow } from '../windows/getWindows';
 import { appSettings, isValidProfiles } from './AppSettings';
 
 const TITLE = 'Import Settings';
@@ -24,9 +24,7 @@ const copyBackgroundImage = (bgImage: string, oldDataFolder: string) => {
   if (!source) return undefined;
 
   try {
-    const dest = getDataPath(`${crypto.randomUUID()}${extname(source)}`);
-    copyFileSync(source, dest);
-    return dest.replaceAll('\\', '/');
+    return fileHandler.copyToDataFolder(source);
   } catch (e) {
     console.error('Unable to copy background image', e);
     return undefined;
@@ -39,6 +37,19 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     await dialog.showMessageBox(mainWindow, { type: 'error', title: TITLE, message, detail });
     return false;
   };
+
+  // Importing replaces the mode, background and text settings, which would change what's on the projector mid-service.
+  const blockIfOutputShowing = async () => {
+    if (!getOutputWindow()?.isVisible()) return false;
+    await dialog.showMessageBox(mainWindow, {
+      type: 'warning',
+      title: TITLE,
+      message: 'Hide the output before importing settings.',
+      detail: 'Settings can’t be imported while the output is showing, because it would change what is on the screen.',
+    });
+    return true;
+  };
+  if (await blockIfOutputShowing()) return false;
 
   const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
     title: 'Select the folder of your previous Worship Assistant version',
@@ -77,6 +88,7 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     detail: `Your current text settings, playlist and background image will be replaced with the ones from:\n${dirname(settingsFile)}`,
   });
   if (response !== 0) return false;
+  if (await blockIfOutputShowing()) return false;
 
   const oldDataFolder = dirname(settingsFile);
   let missingImages = 0;
@@ -87,7 +99,8 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     return { ...profile, bgImage };
   });
 
-  // Background images of the replaced settings are no longer used.
+  // Background images of the replaced settings are no longer used. One picked during this session is only known to
+  // the renderer, which removes it when it receives the imported profile.
   appSettings.getProfiles().forEach((p) => p.bgImage && fileHandler.removeFromDataFolder(p.bgImage));
 
   appSettings.replaceProfiles(importedProfiles);

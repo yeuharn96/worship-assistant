@@ -1,6 +1,6 @@
 import { Rectangle } from 'electron';
 import { Profile } from '../../shared/types';
-import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
 import { getDataPath } from '../utils';
 import { dirname } from 'path';
 
@@ -86,7 +86,15 @@ class AppSettings {
     // Write to a temp file first so a crash mid-write never leaves a truncated settings.json.
     const tempPath = `${filePath}.tmp`;
     writeFileSync(tempPath, updatedJson, { encoding: 'utf-8' });
-    renameSync(tempPath, filePath);
+    try {
+      renameSync(tempPath, filePath);
+    } catch (e) {
+      // Windows refuses to replace a file that's briefly locked (antivirus, search indexer, Explorer preview),
+      // which would lose the session's settings. Fall back to writing in place, which those locks usually allow.
+      console.error('Unable to replace settings file, writing it in place instead', e);
+      writeFileSync(filePath, updatedJson, { encoding: 'utf-8' });
+      rmSync(tempPath, { force: true });
+    }
     this.savedJson = updatedJson;
   }
 
