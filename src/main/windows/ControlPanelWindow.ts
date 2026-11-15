@@ -28,8 +28,14 @@ export const createWindow = () => {
   });
 
   mainWindow.on('closed', () => {
-    !is.dev && appSettings.writeSaveFile();
-    app.quit();
+    try {
+      !is.dev && appSettings.writeSaveFile();
+    } catch (e) {
+      console.error('Unable to save settings', e);
+    } finally {
+      // Always quit, otherwise the hidden output window keeps the process alive.
+      app.quit();
+    }
   });
 
   mainWindow.webContents.setWindowOpenHandler(() => {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { DragDropContext, OnDragEndResponder } from 'react-beautiful-dnd';
 import { Video } from 'src/shared/types';
@@ -14,43 +14,35 @@ import { toast } from 'sonner';
 const VideoPlaylist = () => {
   const { playlist, addPlaylistItems, removePlaylistItem, setProfile } = useProfileStore();
   const { playingVideo, isShowing, setOutput } = useOutputStore();
-  const [playlistItems, setPlaylistItems] = useState<Video[]>([]);
-  const [initLoaded, setInitLoaded] = useState(false);
+  // Lookup of every path seen so far: the video, or null if the file is missing.
+  const [videoInfo, setVideoInfo] = useState<Record<string, Video | null>>({});
 
+  // The profile's playlist is the single source of truth; this only resolves names / existence for new paths.
   useEffect(() => {
-    if (!initLoaded) {
-      const getValidVideo = async (videoPath: string) => {
-        const name = await window.api.getFileName(videoPath);
-        const exists = await window.api.checkFileExists(videoPath);
-        if (!exists) {
-          // toast.error('Invalid video', {
-          //   description: (
-          //     <div>
-          //       <span className='font-bold'>{name}</span> video not found.
-          //     </div>
-          //   ),
-          //   closeButton: true,
-          //   duration: 10 * 1000,
-          // });
-          return;
-        }
+    const unknownPaths = playlist.filter((videoPath) => !(videoPath in videoInfo));
+    if (unknownPaths.length === 0) return;
 
-        return { path: videoPath, name };
-      };
-      (async () => {
-        const tasks = playlist.map((videoPath) => getValidVideo(videoPath));
-        const items = (await Promise.all(tasks)).filter((res) => Boolean(res)) as Video[];
-        setPlaylistItems(items);
-        setInitLoaded(true);
-      })();
-    }
+    const getValidVideo = async (videoPath: string) => {
+      const exists = await window.api.checkFileExists(videoPath);
+      if (!exists) return null;
+      return { path: videoPath, name: await window.api.getFileName(videoPath) };
+    };
+    (async () => {
+      const entries = await Promise.all(unknownPaths.map(async (p) => [p, await getValidVideo(p)] as const));
+      setVideoInfo((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    })();
   }, [playlist]);
+
+  const playlistItems = useMemo(
+    () => [...new Set(playlist)].map((videoPath) => videoInfo[videoPath]).filter((v): v is Video => Boolean(v)),
+    [playlist, videoInfo],
+  );
 
   const handleAddVideo = async () => {
     const selected = await window.api.askVideosDialog();
     const newVideos = [] as Video[];
     selected.forEach((vid) => {
-      if (playlistItems.every(item => item.path !== vid.path)) {
+      if (!playlist.includes(vid.path) && newVideos.every((v) => v.path !== vid.path)) {
         newVideos.push(vid);
       } else {
         toast.error('Duplicate video', {
@@ -66,7 +58,7 @@ const VideoPlaylist = () => {
     });
 
     if (newVideos.length > 0) {
-      setPlaylistItems((prev) => prev.concat(newVideos));
+      setVideoInfo((prev) => ({ ...prev, ...Object.fromEntries(newVideos.map((vid) => [vid.path, vid])) }));
       addPlaylistItems(newVideos.map((vid) => vid.path));
     }
   };
@@ -75,7 +67,6 @@ const VideoPlaylist = () => {
     if (isShowing) window.api.setOutputVideo(item.path);
   };
   const handleRemoveVideo = (item: Video) => {
-    setPlaylistItems((prev) => prev.filter((i) => i.path !== item.path));
     removePlaylistItem(item.path);
     if (playingVideo === item.path) setOutput({ playingVideo: undefined });
   };
@@ -86,11 +77,12 @@ const VideoPlaylist = () => {
     if (!destination) return;
     if (destination.droppableId === source.droppableId && destination.index === source.index) return;
 
-    const updatedItems = [...playlistItems];
-    updatedItems.splice(source.index, 1);
-    updatedItems.splice(destination.index, 0, playlistItems[source.index]);
-    setPlaylistItems(updatedItems);
-    setTimeout(() => setProfile({ playlist: updatedItems.map((i) => i.path) }), 100);
+    const reordered = playlistItems.map((i) => i.path);
+    const [moved] = reordered.splice(source.index, 1);
+    reordered.splice(destination.index, 0, moved);
+    // Missing files aren't shown; keep them at the end so they still come back if the file reappears.
+    const missing = playlist.filter((videoPath) => !videoInfo[videoPath]);
+    setProfile({ playlist: [...reordered, ...missing] });
   };
 
   return (

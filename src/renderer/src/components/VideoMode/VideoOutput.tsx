@@ -1,8 +1,8 @@
 import { useIpcListeners } from '@renderer/lib/ipc';
-import waitElementRendered from '@renderer/lib/waitElementRendered';
 import useOutputStore from '@renderer/store/output';
 import useProfileStore from '@renderer/store/profile';
 import { SyntheticEvent, useEffect, useRef } from 'react';
+import { localFileUrl } from '@renderer/lib/utils';
 
 const VideoOutput = () => {
   const { volume } = useProfileStore();
@@ -22,7 +22,7 @@ const VideoOutput = () => {
     setOutputVideo: (videoPath, autoPlay = false) => {
       setOutput({ playingVideo: videoPath });
       if (videoRef.current) {
-        videoRef.current.src = `video:///${videoPath}`;
+        videoRef.current.src = localFileUrl('video', videoPath);
         videoRef.current.autoplay = autoPlay;
       }
     },
@@ -35,20 +35,12 @@ const VideoOutput = () => {
   };
 
   useEffect(() => {
-    (async () => {
-      const videoEl = await waitElementRendered<HTMLVideoElement>('#video-output');
-      if (!videoRef.current) {
-        videoRef.current = videoEl;
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
     if (videoRef.current) videoRef.current.volume = volume / 100;
   }, [volume]);
 
   return (
     <video
+      ref={videoRef}
       id='video-output'
       className='w-full h-full'
       onTimeUpdate={updateVideoPlayState}

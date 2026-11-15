@@ -1,5 +1,5 @@
 import { Profile } from '../../shared/types';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 import { getDataPath } from '../utils';
 import { dirname } from 'path';
 
@@ -35,12 +35,31 @@ class AppSettings {
   }
 
   public init() {
-    const settingFileExists = existsSync(AppSettings.SETTINGS_FILE_PATH);
-    if (settingFileExists) {
-      this.savedJson = readFileSync(AppSettings.SETTINGS_FILE_PATH, { encoding: 'utf-8' });
-      const settings = tryParseJson(this.savedJson);
-      this.profiles = settings.profiles;
+    const filePath = AppSettings.SETTINGS_FILE_PATH;
+    if (!existsSync(filePath)) return;
+
+    try {
+      this.savedJson = readFileSync(filePath, { encoding: 'utf-8' });
+    } catch (e) {
+      console.error('Unable to read settings file', e);
+      return;
     }
+
+    const settings = tryParseJson(this.savedJson);
+    const profiles = settings?.profiles;
+    if (Array.isArray(profiles) && profiles.every((p) => typeof p?.profile?.id === 'string')) {
+      this.profiles = profiles;
+      return;
+    }
+
+    // Settings file is damaged: keep a copy for the user and start from defaults instead of crashing.
+    console.error('Settings file is invalid, starting with default settings');
+    try {
+      renameSync(filePath, `${filePath}.${Date.now()}.bak`);
+    } catch (e) {
+      console.error('Unable to back up invalid settings file', e);
+    }
+    this.savedJson = '';
   }
 
   public writeSaveFile() {
@@ -49,13 +68,14 @@ class AppSettings {
     const updatedJson = JSON.stringify(appSettings, undefined, 2);
     if (updatedJson === this.savedJson) return;
 
-    if (!existsSync(AppSettings.SETTINGS_FILE_PATH)) {
-      mkdirSync(dirname(AppSettings.SETTINGS_FILE_PATH), { recursive: true });
-    }
+    const filePath = AppSettings.SETTINGS_FILE_PATH;
+    mkdirSync(dirname(filePath), { recursive: true });
 
-    writeFileSync(AppSettings.SETTINGS_FILE_PATH, updatedJson, {
-      encoding: 'utf-8',
-    });
+    // Write to a temp file first so a crash mid-write never leaves a truncated settings.json.
+    const tempPath = `${filePath}.tmp`;
+    writeFileSync(tempPath, updatedJson, { encoding: 'utf-8' });
+    renameSync(tempPath, filePath);
+    this.savedJson = updatedJson;
   }
 
   public getProfiles() {
@@ -77,9 +97,8 @@ class AppSettings {
     if (!profile) {
       this.profiles.push(value);
     } else {
-      Object.keys(profile).forEach((key) => {
-        if (key in value) profile[key] = value[key];
-      });
+      // Copy every key from the incoming profile so settings added in newer versions are saved too.
+      Object.assign(profile, value);
     }
 
     this.selectProfile(value.profile.id);

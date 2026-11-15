@@ -1,8 +1,21 @@
 import { app, protocol, screen } from 'electron';
 import { electronApp, optimizer } from '@electron-toolkit/utils';
 import { createWindow } from './windows/ControlPanelWindow';
-import { createOutputWindow } from './windows/OutputWindow';
+import { createOutputWindow, moveOutputWindow } from './windows/OutputWindow';
+import { getOutputDisplay } from './windows/outputDisplay';
+import { getOutputWindow } from './windows/getWindows';
 import setupMainHandlers from './ipc/setupMainHandlers';
+import sendHandlers from './ipc/sendHandlers';
+
+// Renderer builds these URLs as `<scheme>:///<encodeURIComponent(path)>` (see renderer lib/utils localFileUrl).
+const getLocalFilePath = (url: string, scheme: string) => {
+  const raw = url.slice(`${scheme}:///`.length);
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+};
 
 app.whenReady().then(() => {
   // Set app user model id for windows
@@ -18,17 +31,30 @@ app.whenReady().then(() => {
   const mainWindow = createWindow();
   process.env.MAIN_WINDOW_ID = mainWindow.id.toString();
 
-  const displays = screen.getAllDisplays();
-  const outputWindow = createOutputWindow(displays.length > 1 ? displays[1] : displays[0]);
+  const outputWindow = createOutputWindow(getOutputDisplay());
   process.env.OUTPUT_WINDOW_ID = outputWindow.id.toString();
 
+  // Follow the projector when displays are connected, disconnected or change resolution.
+  const handleDisplayChanged = () => {
+    const win = getOutputWindow();
+    if (!win) return;
+    const display = getOutputDisplay();
+    const current = win.getBounds();
+    const { x, y, width, height } = display.bounds;
+    if (current.x !== x || current.y !== y || current.width !== width || current.height !== height) {
+      moveOutputWindow(win, display);
+    }
+    sendHandlers.setOutputDimension(display.size);
+  };
+  screen.on('display-added', handleDisplayChanged);
+  screen.on('display-removed', handleDisplayChanged);
+  screen.on('display-metrics-changed', handleDisplayChanged);
+
   protocol.registerFileProtocol('video', (request, callback) => {
-    const pathname = decodeURI(request.url.replace('video:///', ''));
-    callback(pathname);
+    callback(getLocalFilePath(request.url, 'video'));
   });
   protocol.registerFileProtocol('image', (request, callback) => {
-    const pathname = decodeURI(request.url.replace('image:///', ''));
-    callback(pathname);
+    callback(getLocalFilePath(request.url, 'image'));
   });
 
   setupMainHandlers();

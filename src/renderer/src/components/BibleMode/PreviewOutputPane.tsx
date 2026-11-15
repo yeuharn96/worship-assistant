@@ -1,11 +1,13 @@
 import useOutputStore from '@renderer/store/output';
-import { CSSProperties, FC, useEffect, useRef, useState } from 'react';
+import { CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react';
 import useProfileStore from '@renderer/store/profile';
 import { Button } from '../ui/button';
 import { CheckSquare, ChevronDown, ChevronUp } from 'lucide-react';
 import { useIpcListeners } from '@renderer/lib/ipc';
 import { cn } from '@renderer/lib/utils';
 import { Checkbox } from '../ui/checkbox';
+import { useOutputMonitor } from '@renderer/hooks/useOutputMonitor';
+import { VersePos } from 'src/shared/types';
 
 type Props = {
   show: boolean;
@@ -23,39 +25,15 @@ const PreviewOutputPane: FC<Props> = () => {
   const [outputScrollInfo, setOutputScrollInfo] = useState({
     scrollHeight: 0,
     scrollTop: 0,
-    versePos: [] as Array<{ verse: string; scrollTop: number }>,
+    versePos: [] as VersePos[],
   });
+  // Slider position while the user is dragging it, so the thumb doesn't jump back to the lagging output position.
+  const [sliderValue, setSliderValue] = useState<number | null>(null);
 
+  useOutputMonitor(monitorRef);
   useIpcListeners({
-    hideOutput: () => {
-      if (monitorRef.current?.srcObject) {
-        (monitorRef.current.srcObject as MediaStream).getTracks()[0].stop();
-        monitorRef.current.srcObject = null;
-      }
-    },
-    monitorOutput: async (sourceId) => {
-      try {
-        const constraints = {
-          audio: false,
-          video: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: sourceId,
-            },
-          },
-        };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints as any);
-
-        if (monitorRef.current && !monitorRef.current.srcObject) {
-          monitorRef.current.srcObject = stream;
-          monitorRef.current.onloadedmetadata = () => monitorRef.current?.play();
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
     syncOutputScroll: (scrollHeight, scrollTop, versePos) => {
-      setOutputScrollInfo({ scrollHeight, scrollTop, versePos });
+      setOutputScrollInfo((prev) => ({ scrollHeight, scrollTop, versePos: versePos ?? prev.versePos }));
     },
   });
 
@@ -83,39 +61,15 @@ const PreviewOutputPane: FC<Props> = () => {
     return { aspectRatio: width / height };
   };
 
-  const scrollToPos = (pos: number) => {
-    window.api.scrollOutputOffset(pos - outputScrollInfo.scrollTop, smoothScrolling ? 'smooth' : 'auto');
-  };
-
-  const scrollOffset = (offset: number) => {
-    window.api.scrollOutputOffset(offset, smoothScrolling ? 'smooth' : 'auto');
-  };
-
-  const scrollToNextVerse = (next: boolean) => {
-    const { scrollTop, versePos } = outputScrollInfo ?? {};
-    const verseIdx = versePos?.findLastIndex((pos) => scrollTop >= pos.scrollTop) ?? -1;
-    if (verseIdx === -1) return;
-
-    if (verseIdx === 0 && !next) {
-      scrollToPos(versePos[0].scrollTop);
-      return;
-    }
-    if (verseIdx === versePos.length - 1 && next) {
-      scrollToPos(versePos[versePos.length - 1].scrollTop);
-      return;
-    }
-
-    scrollToPos(versePos[verseIdx + (next ? 1 : -1)].scrollTop);
-  };
-
-  const renderVerseTooltip = () => {
-    const lastVerse = outputScrollInfo.versePos.at(-1);
+  const verseTooltips = useMemo(() => {
+    const { versePos } = outputScrollInfo;
+    const lastVerse = versePos.at(-1);
     if (!lastVerse) return;
 
     const borderWidth = 5;
 
-    return outputScrollInfo.versePos.map((vp) => {
-      const placementPos = (vp.scrollTop / lastVerse.scrollTop) * 100;
+    return versePos.map((vp) => {
+      const placementPos = lastVerse.scrollTop > 0 ? (vp.scrollTop / lastVerse.scrollTop) * 100 : 0;
       return (
         <div
           key={`${book}-${chapter}-${vp.verse}`}
@@ -124,7 +78,7 @@ const PreviewOutputPane: FC<Props> = () => {
             'px-2 rounded cursor-pointer shadow-[0_1px_3px_2px_rgba(0,0,0,0.5)] absolute text-gray-800 bg-gray-300 whitespace-nowrap',
           )}
           style={{ top: `${placementPos}%` }}
-          onClick={() => scrollToPos(vp.scrollTop)}
+          onClick={() => window.api.scrollOutputTo(vp.scrollTop)}
           title={`Jump to Verse ${vp.verse}`}
         >
           <span className='hidden group-hover:inline'>Verse</span>{' '}
@@ -140,7 +94,7 @@ const PreviewOutputPane: FC<Props> = () => {
         </div>
       );
     });
-  };
+  }, [outputScrollInfo.versePos, book, chapter]);
 
   return (
     <div className='w-full h-[90vh] flex flex-col items-center'>
@@ -185,15 +139,20 @@ const PreviewOutputPane: FC<Props> = () => {
                 type='range'
                 min={0}
                 max={outputScrollInfo.scrollHeight}
-                value={outputScrollInfo.scrollTop}
+                value={sliderValue ?? outputScrollInfo.scrollTop}
                 onChange={(e) => {
                   const value = Number(e.target.value);
-                  !isNaN(value) && scrollToPos(value);
+                  if (isNaN(value)) return;
+                  setSliderValue(value);
+                  window.api.scrollOutputTo(value);
                 }}
+                onPointerUp={() => setSliderValue(null)}
+                onKeyUp={() => setSliderValue(null)}
+                onBlur={() => setSliderValue(null)}
                 className='w-[50vh]'
               />
             </div>
-            <div className='absolute h-full top-0 -right-[12vh]'>{renderVerseTooltip()}</div>
+            <div className='absolute h-full top-0 -right-[12vh]'>{verseTooltips}</div>
           </>
         )}
       </div>
@@ -206,7 +165,7 @@ const PreviewOutputPane: FC<Props> = () => {
               size='lg'
               className='pl-6 flex-1'
               title='Scroll Up'
-              onClick={() => scrollOffset(-scrollUnit)}
+              onClick={() => window.api.scrollOutputOffset(-scrollUnit)}
             >
               <ChevronUp className='h-10 w-10' /> Scroll Up
             </Button>
@@ -215,7 +174,7 @@ const PreviewOutputPane: FC<Props> = () => {
               size='lg'
               className='pl-6 flex-1'
               title='Scroll Down'
-              onClick={() => scrollOffset(scrollUnit)}
+              onClick={() => window.api.scrollOutputOffset(scrollUnit)}
             >
               <ChevronDown className='h-10 w-10' /> Scroll Down
             </Button>
@@ -226,7 +185,7 @@ const PreviewOutputPane: FC<Props> = () => {
               size='lg'
               className='pl-6 flex-1'
               title='Scroll To Previous Verse'
-              onClick={() => scrollToNextVerse(false)}
+              onClick={() => window.api.scrollOutputVerse(-1)}
             >
               <ChevronUp className='h-10 w-10' /> Prev Verse
             </Button>
@@ -235,26 +194,23 @@ const PreviewOutputPane: FC<Props> = () => {
               size='lg'
               className='pl-6 flex-1'
               title='Scroll To Next Verse'
-              onClick={() => scrollToNextVerse(true)}
+              onClick={() => window.api.scrollOutputVerse(1)}
             >
               <ChevronDown className='h-10 w-10' /> Next Verse
             </Button>
-            <label 
-              className={cn(
-                'absolute w-auto h-auto left-full translate-y-1/2',
-                'flex items-center cursor-pointer'
-              )}
+            <label
+              className={cn('absolute w-auto h-auto left-full translate-y-1/2', 'flex items-center cursor-pointer')}
             >
-                <Checkbox
-                  className={cn(
-                    'border-white mr-2 w-6 h-6',
-                    'data-[state=checked]:bg-white data-[state=checked]:text-primary'
-                  )}
-                  checked={smoothScrolling}
-                  onCheckedChange={(checked) => setProfile({ smoothScrolling: Boolean(checked) })}
-                />
-                <span className={cn('text-nowrap', smoothScrolling && 'font-bold')}>Smooth Scrolling</span>
-              </label>
+              <Checkbox
+                className={cn(
+                  'border-white mr-2 w-6 h-6',
+                  'data-[state=checked]:bg-white data-[state=checked]:text-primary',
+                )}
+                checked={smoothScrolling}
+                onCheckedChange={(checked) => setProfile({ smoothScrolling: Boolean(checked) })}
+              />
+              <span className={cn('text-nowrap', smoothScrolling && 'font-bold')}>Smooth Scrolling</span>
+            </label>
           </div>
         </>
       )}

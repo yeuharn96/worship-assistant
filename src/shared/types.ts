@@ -75,20 +75,25 @@ export type VideoPlayState = {
   duration: number;
 };
 
+export type VersePos = { verse: string; scrollTop: number };
+
 export type WebContentEventListeners = {
   hideOutput: () => void;
   applyOutputSettings: (settings: Profile) => void;
   monitorOutput: (sourceId?: string) => void;
+  setOutputDimension: (size: Size) => void;
 
   // bible
   setBookTitleLanguage: (lang: 'en' | 'zh') => void;
   setOutputBibleText: (loc: ScriptureLocation) => void;
-  scrollOutputOffset: (offset: number, behavior?: ScrollBehavior) => void;
-  syncOutputScroll: (
-    scrollHeight: number,
-    scrollTop: number,
-    versePos: Array<{ verse: string; scrollTop: number }>,
-  ) => void;
+  /** Scroll the output by a relative amount (px). */
+  scrollOutputOffset: (offset: number) => void;
+  /** Scroll the output to an absolute position (px). */
+  scrollOutputTo: (top: number) => void;
+  /** Scroll the output to the next (1) or previous (-1) verse. */
+  scrollOutputVerse: (direction: 1 | -1) => void;
+  /** `versePos` is only sent when verse positions changed. */
+  syncOutputScroll: (scrollHeight: number, scrollTop: number, versePos?: VersePos[]) => void;
 
   // video
   setOutputVideo: (videoPath: string, autoPlay?: boolean) => void;

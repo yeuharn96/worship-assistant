@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EyeOff, Presentation } from 'lucide-react';
 import BibleSelectionPane from '../components/BibleMode/BibleSelectionPane';
 import { Button } from '../components/ui/button';
@@ -14,9 +14,11 @@ import PreviewVideoPane from '@renderer/components/VideoMode/PreviewVideoPane';
 import { cn } from '@renderer/lib/utils';
 
 const ControlPanel = () => {
-  const { mode, setProfile, getProfile } = useProfileStore();
+  const profileState = useProfileStore();
+  const { mode, setProfile, getProfile } = profileState;
   const { book, chapter, verse, isShowing, playingVideo, setOutput } = useOutputStore();
-  const profile = getProfile();
+  // Only changes when the profile store changes, so effects below don't re-run on unrelated renders.
+  const profile = useMemo(() => getProfile(), [profileState]);
 
   const [currentTab, setCurrentTab] = useState('bible');
   const [settingTab, setSettingTab] = useState('setting');
@@ -30,6 +32,7 @@ const ControlPanel = () => {
       setBookTitleLanguage: (lang) => {
         setProfile({ lang });
       },
+      setOutputDimension: (dimension) => setOutput({ dimension }),
     },
     [mode],
   );
@@ -48,7 +51,7 @@ const ControlPanel = () => {
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      window.electron.ipcRenderer.send('window-closing', profile);
+      window.electron.ipcRenderer.send('window-closing', getProfile());
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -56,7 +59,7 @@ const ControlPanel = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [profile]);
+  }, []);
 
   useEffect(() => {
     if (isShowing) window.api.applyOutputSettings(profile);

@@ -29,6 +29,10 @@ const webContentEventHandlers: WebContentEventListeners = {
   applyOutputSettings: (...args) => {
     getOutputWindow()?.webContents.send('applyOutputSettings', ...args);
   },
+  setOutputDimension: (...args) => {
+    getMainWindow()?.webContents.send('setOutputDimension', ...args);
+    getOutputWindow()?.webContents.send('setOutputDimension', ...args);
+  },
   monitorOutput: () => {
     const srcId = getOutputWindow()?.getMediaSourceId();
     if (srcId) getMainWindow()?.webContents.send('monitorOutput', srcId);
@@ -43,6 +47,12 @@ const webContentEventHandlers: WebContentEventListeners = {
   },
   scrollOutputOffset: (...args) => {
     getOutputWindow()?.webContents.send('scrollOutputOffset', ...args);
+  },
+  scrollOutputTo: (...args) => {
+    getOutputWindow()?.webContents.send('scrollOutputTo', ...args);
+  },
+  scrollOutputVerse: (...args) => {
+    getOutputWindow()?.webContents.send('scrollOutputVerse', ...args);
   },
   syncOutputScroll: (...args) => {
     getMainWindow()?.webContents.send('syncOutputScroll', ...args);

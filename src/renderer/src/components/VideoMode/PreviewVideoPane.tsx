@@ -8,6 +8,7 @@ import useProfileStore from '@renderer/store/profile';
 import VolumeSlider from './VolumeSlider';
 import MuteButton from './MuteButton';
 import VideoControl from './VideoControl';
+import { useOutputMonitor } from '@renderer/hooks/useOutputMonitor';
 
 const PreviewVideoPane = () => {
   const { volume, loop, playNext, setProfile } = useProfileStore();
@@ -18,34 +19,8 @@ const PreviewVideoPane = () => {
   const [playState, setPlayState] = useState<VideoPlayState>({ currentTime: 0, duration: 0 });
   const [nowPlayingTitle, setNowPlayingTitle] = useState<string>();
 
+  useOutputMonitor(monitorRef);
   useIpcListeners({
-    hideOutput: () => {
-      if (monitorRef.current?.srcObject) {
-        (monitorRef.current.srcObject as MediaStream).getTracks()[0].stop();
-        monitorRef.current.srcObject = null;
-      }
-    },
-    monitorOutput: async (sourceId) => {
-      try {
-        const constraints = {
-          audio: false,
-          video: {
-            mandatory: {
-              chromeMediaSource: 'desktop',
-              chromeMediaSourceId: sourceId,
-            },
-          },
-        };
-        const stream = await navigator.mediaDevices.getUserMedia(constraints as any);
-
-        if (monitorRef.current && !monitorRef.current.srcObject) {
-          monitorRef.current.srcObject = stream;
-          monitorRef.current.onloadedmetadata = () => monitorRef.current?.play();
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    },
     syncVideoPlayState: (state) => {
       setPlayState(state);
     },

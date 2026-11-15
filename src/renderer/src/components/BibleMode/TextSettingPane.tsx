@@ -2,7 +2,6 @@ import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import InputNumber from '../ui/input-number';
 import useProfileStore from '@renderer/store/profile';
 import { Button } from '../ui/button';
-import { toast } from 'sonner';
 import useModalStore from '@renderer/store/modal';
 import TextSettingItem from './TextSettingItem';
 import ChangeBackgroundImageButton from '../ui/ChangeBackgroundImageButton';
@@ -60,27 +59,7 @@ const TextSettingPane = () => {
       <div className='flex mb-2'>
         <div className='flex-[1] pr-2'>Background</div>
         <div className='flex-[1] pr-2'>
-          <ChangeBackgroundImageButton
-            bgImage={profile.bgImage}
-            onChange={async (bgImage) => {
-              if (bgImage) {
-                try {
-                  bgImage = await window.api.copyToDataFolder(bgImage);
-                } catch (e) {
-                  toast.error('Unable to change background image', {
-                    description: (e as Error).message,
-                    closeButton: true,
-                    duration: 10 * 1000,
-                  });
-                }
-              }
-
-              if (profile.bgImage) {
-                window.api.removeFromDataFolder(profile.bgImage);
-              }
-              setProfile({ bgImage });
-            }}
-          />
+          <ChangeBackgroundImageButton bgImage={profile.bgImage} onChange={(bgImage) => setProfile({ bgImage })} />
         </div>
         <div className='flex-[1]'>
           <input

@@ -1,6 +1,10 @@
-import { BrowserWindow, Display } from 'electron';
+import { app, BrowserWindow, Display } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
+import sendHandlers from '../ipc/sendHandlers';
+
+let isQuitting = false;
+app.on('before-quit', () => (isQuitting = true));
 
 export const createOutputWindow = (display: Display) => {
   const outputWindow = new BrowserWindow({
@@ -23,6 +27,13 @@ export const createOutputWindow = (display: Display) => {
     },
   });
 
+  // The output window lives for the whole session: closing it (e.g. Alt+F4) only hides it.
+  outputWindow.on('close', (e) => {
+    if (isQuitting) return;
+    e.preventDefault();
+    sendHandlers.hideOutput();
+  });
+
   outputWindow.webContents.setWindowOpenHandler(() => {
     return { action: 'deny' };
   });
@@ -34,4 +45,11 @@ export const createOutputWindow = (display: Display) => {
   }
 
   return outputWindow;
+};
+
+/** Move the fullscreen output window onto `display` (e.g. after a projector is plugged in). */
+export const moveOutputWindow = (outputWindow: BrowserWindow, display: Display) => {
+  outputWindow.setFullScreen(false);
+  outputWindow.setBounds(display.bounds);
+  outputWindow.setFullScreen(true);
 };
