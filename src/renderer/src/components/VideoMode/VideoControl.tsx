@@ -2,7 +2,7 @@ import { Play, Pause, Square, RotateCcw, RotateCw, SkipBack, SkipForward } from 
 import { Button } from '../ui/button';
 import { VideoPlayState } from 'src/shared/types';
 import useProfileStore from '@renderer/store/profile';
-import { FC, useEffect, useMemo, useState } from 'react';
+import { FC, useMemo } from 'react';
 import useOutputStore from '@renderer/store/output';
 import { useIpcListeners } from '@renderer/lib/ipc';
 
@@ -13,7 +13,11 @@ const VideoControl: FC<Props> = ({ playState }) => {
   const { playlist, skipSeconds, loop, playNext } = useProfileStore();
   const { playingVideo, setOutput } = useOutputStore();
 
-  const [playlistIndex, setPlaylistIndex] = useState<number>();
+  // Derived from both, so reordering or removing items while a video plays keeps Next/Prev correct.
+  const playlistIndex = useMemo(() => {
+    const currentIndex = playlist.findIndex((videoPath) => videoPath === playingVideo);
+    return currentIndex > -1 ? currentIndex : undefined;
+  }, [playlist, playingVideo]);
 
   useIpcListeners(
     {
@@ -28,12 +32,6 @@ const VideoControl: FC<Props> = ({ playState }) => {
     },
     [loop, playNext, playlistIndex, playlist],
   );
-
-  useEffect(() => {
-    const currentIndex = playlist.findIndex((videoPath) => videoPath === playingVideo);
-    if (currentIndex > -1) setPlaylistIndex(currentIndex);
-    else setPlaylistIndex(undefined);
-  }, [playingVideo]);
 
   const handleChangeVideo = (next: boolean, autoPlay = false) => {
     if (playlistIndex === undefined) return;

@@ -1,7 +1,7 @@
 import { copyFileSync, existsSync, unlinkSync } from 'fs';
 import crypto from 'crypto';
 import path, { extname } from 'path';
-import { getDataPath } from '../../utils';
+import { getDataPath, isInDataFolder } from '../../utils';
 
 export const fileHandler = {
   copyToDataFolder: (filePath: string) => {
@@ -12,7 +12,8 @@ export const fileHandler = {
     return dest.replaceAll('\\', '/');
   },
   removeFromDataFolder: (filePath: string) => {
-    if (!existsSync(filePath)) return;
+    // Never delete anything outside the app's own data folder (e.g. the user's original image).
+    if (!isInDataFolder(filePath) || !existsSync(filePath)) return false;
 
     unlinkSync(filePath);
     return true;

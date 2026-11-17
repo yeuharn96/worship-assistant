@@ -1,5 +1,6 @@
+import { Rectangle } from 'electron';
 import { Profile } from '../../shared/types';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
 import { getDataPath } from '../utils';
 import { dirname } from 'path';
 
@@ -11,11 +12,21 @@ const tryParseJson = (json: string) => {
   }
 };
 
+export type WindowState = { bounds: Rectangle; isMaximized: boolean };
+
+const isValidWindowState = (value: any): value is WindowState =>
+  typeof value?.isMaximized === 'boolean' &&
+  ['x', 'y', 'width', 'height'].every((key) => Number.isFinite(value?.bounds?.[key]));
+
+export const isValidProfiles = (value: any): value is Profile[] =>
+  Array.isArray(value) && value.every((p) => typeof p?.profile?.id === 'string');
+
 class AppSettings {
   private static SETTINGS_FILE_PATH = getDataPath('settings.json');
   private static instance: AppSettings;
   private savedJson: string = '';
   private profiles: Profile[] = [];
+  private windowState?: WindowState;
 
   private constructor() {
     if (!AppSettings.instance) {
@@ -35,12 +46,32 @@ class AppSettings {
   }
 
   public init() {
-    const settingFileExists = existsSync(AppSettings.SETTINGS_FILE_PATH);
-    if (settingFileExists) {
-      this.savedJson = readFileSync(AppSettings.SETTINGS_FILE_PATH, { encoding: 'utf-8' });
-      const settings = tryParseJson(this.savedJson);
-      this.profiles = settings.profiles;
+    const filePath = AppSettings.SETTINGS_FILE_PATH;
+    if (!existsSync(filePath)) return;
+
+    try {
+      this.savedJson = readFileSync(filePath, { encoding: 'utf-8' });
+    } catch (e) {
+      console.error('Unable to read settings file', e);
+      return;
     }
+
+    const settings = tryParseJson(this.savedJson);
+    const profiles = settings?.profiles;
+    if (isValidProfiles(profiles)) {
+      this.profiles = profiles;
+      if (isValidWindowState(settings.windowState)) this.windowState = settings.windowState;
+      return;
+    }
+
+    // Settings file is damaged: keep a copy for the user and start from defaults instead of crashing.
+    console.error('Settings file is invalid, starting with default settings');
+    try {
+      renameSync(filePath, `${filePath}.${Date.now()}.bak`);
+    } catch (e) {
+      console.error('Unable to back up invalid settings file', e);
+    }
+    this.savedJson = '';
   }
 
   public writeSaveFile() {
@@ -49,13 +80,29 @@ class AppSettings {
     const updatedJson = JSON.stringify(appSettings, undefined, 2);
     if (updatedJson === this.savedJson) return;
 
-    if (!existsSync(AppSettings.SETTINGS_FILE_PATH)) {
-      mkdirSync(dirname(AppSettings.SETTINGS_FILE_PATH), { recursive: true });
-    }
+    const filePath = AppSettings.SETTINGS_FILE_PATH;
+    mkdirSync(dirname(filePath), { recursive: true });
 
-    writeFileSync(AppSettings.SETTINGS_FILE_PATH, updatedJson, {
-      encoding: 'utf-8',
-    });
+    // Write to a temp file first so a crash mid-write never leaves a truncated settings.json.
+    const tempPath = `${filePath}.tmp`;
+    writeFileSync(tempPath, updatedJson, { encoding: 'utf-8' });
+    try {
+      renameSync(tempPath, filePath);
+    } catch (e) {
+      // Windows refuses to replace a file that's briefly locked (antivirus, search indexer, Explorer preview),
+      // which would lose the session's settings. Fall back to writing in place, which those locks usually allow.
+      console.error('Unable to replace settings file, writing it in place instead', e);
+      writeFileSync(filePath, updatedJson, { encoding: 'utf-8' });
+      rmSync(tempPath, { force: true });
+    }
+    this.savedJson = updatedJson;
+  }
+
+  public getWindowState() {
+    return this.windowState;
+  }
+  public setWindowState(windowState: WindowState) {
+    this.windowState = windowState;
   }
 
   public getProfiles() {
@@ -68,6 +115,11 @@ class AppSettings {
     return this.profiles.find((p) => p.profile.selected);
   }
 
+  /** Replace all profiles, e.g. when importing settings from a previous version. */
+  public replaceProfiles(profiles: Profile[]) {
+    this.profiles = profiles;
+  }
+
   public selectProfile(id: string) {
     this.profiles.forEach((p) => (p.profile.selected = p.profile.id === id));
   }
@@ -77,9 +129,8 @@ class AppSettings {
     if (!profile) {
       this.profiles.push(value);
     } else {
-      Object.keys(profile).forEach((key) => {
-        if (key in value) profile[key] = value[key];
-      });
+      // Copy every key from the incoming profile so settings added in newer versions are saved too.
+      Object.assign(profile, value);
     }
 
     this.selectProfile(value.profile.id);

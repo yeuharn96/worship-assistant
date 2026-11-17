@@ -17,8 +17,8 @@ const InputNumber: FC<Props> = ({ value = 0, onChange, min, max, className }) =>
       onChange={(e) => {
         let newValue = Number(e.target.value);
         if (isNaN(newValue)) return;
-        if (max && newValue > max) newValue = max;
-        if (min && newValue < min) newValue = min;
+        if (max !== undefined && newValue > max) newValue = max;
+        if (min !== undefined && newValue < min) newValue = min;
 
         onChange && onChange(newValue);
       }}

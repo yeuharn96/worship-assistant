@@ -1,6 +1,9 @@
-import { BrowserWindow, Menu } from 'electron';
+import { BrowserWindow, Menu, shell } from 'electron';
+import { existsSync } from 'fs';
+import { getDataFolder, getDataPath } from '../utils';
 import { WebContentEventListeners } from '../../shared/types';
 import { appSettings } from '../settings/AppSettings';
+import { importSettingsFromPreviousVersion } from '../settings/importSettings';
 
 const createMenu = (mainWindow: BrowserWindow) => {
   const profile = appSettings.getSelectedProfile();
@@ -35,7 +38,27 @@ const createMenu = (mainWindow: BrowserWindow) => {
         },
       ],
     },
-    { label: 'Exit', role: 'quit' },
+    {
+      label: 'Settings',
+      submenu: [
+        {
+          label: 'Import from Previous Version…',
+          click: async () => {
+            // Rebuild so the Language menu reflects the imported settings.
+            if (await importSettingsFromPreviousVersion(mainWindow)) createMenu(mainWindow);
+          },
+        },
+        {
+          label: 'Show Settings File in Folder',
+          click: () => {
+            // settings.json only exists once settings have been saved (on close); otherwise open its folder.
+            const settingsFile = getDataPath('settings.json');
+            if (existsSync(settingsFile)) shell.showItemInFolder(settingsFile);
+            else shell.openPath(getDataFolder());
+          },
+        },
+      ],
+    },
   ]);
 
   // Set the menu

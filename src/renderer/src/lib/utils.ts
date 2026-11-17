@@ -17,3 +17,7 @@ export const formatDuration = (duration: number, dynamicShowHours = false) => {
 
   return hourStr + `${padZero(minutes)}:${padZero(seconds)}`;
 };
+
+/** URL for a local file served by the main process `video://` / `image://` protocols. Safe for `%`, `#`, etc. */
+export const localFileUrl = (scheme: 'video' | 'image', filePath: string) =>
+  `${scheme}:///${encodeURIComponent(filePath)}`;

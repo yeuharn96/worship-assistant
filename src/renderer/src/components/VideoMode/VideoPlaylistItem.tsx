@@ -3,7 +3,7 @@ import { Button } from '../ui/button';
 import { FC, useState } from 'react';
 import VideoThumbnail from './VideoThumbnail';
 import { Video, VideoMetadata } from 'src/shared/types';
-import { cn, formatDuration } from '@renderer/lib/utils';
+import { cn, formatDuration, localFileUrl } from '@renderer/lib/utils';
 import { Draggable } from 'react-beautiful-dnd';
 
 type Props = {
@@ -17,6 +17,9 @@ type Props = {
 const VideoPlaylistItem: FC<Props> = ({ index, item, isSelected, onPlayItem, onRemoveItem }) => {
   const [metadata, setMetadata] = useState<VideoMetadata>();
   const [draggable, setDraggable] = useState(false);
+  // Videos Chromium can't decode never load; they still need the remove button.
+  const [loadFailed, setLoadFailed] = useState(false);
+  const loaded = Boolean(metadata) || loadFailed;
 
   return (
     <Draggable key={item.path} draggableId={item.path} index={index} isDragDisabled={!draggable}>
@@ -32,7 +35,7 @@ const VideoPlaylistItem: FC<Props> = ({ index, item, isSelected, onPlayItem, onR
             isSelected && 'hover:bg-[#243A82] bg-[#172554]',
           )}
         >
-          {metadata && (
+          {loaded && (
             <div
               className='w-[4vw] pr-[1vw] flex justify-center items-center hover:cursor-grab active:cursor-grabbing'
               onMouseEnter={() => setDraggable(true)}
@@ -43,9 +46,10 @@ const VideoPlaylistItem: FC<Props> = ({ index, item, isSelected, onPlayItem, onR
           )}
           <div className='w-1/6 min-w-[16.67%] h-[14vh] relative'>
             <VideoThumbnail
-              src={`video:///${item.path}`}
+              src={localFileUrl('video', item.path)}
               className='w-full h-full bg-black rounded-xl overflow-hidden'
               onVideoDataLoaded={setMetadata}
+              onVideoError={() => setLoadFailed(true)}
             />
             {isSelected && (
               <div className='absolute top-0 left-0 flex justify-center items-center rounded-xl whitespace-nowrap bg-[#000A] w-full h-full'>
@@ -56,7 +60,7 @@ const VideoPlaylistItem: FC<Props> = ({ index, item, isSelected, onPlayItem, onR
               </div>
             )}
           </div>
-          {metadata && (
+          {loaded && (
             <div className='px-2 w-8/12'>
               <div
                 title={item.name}
@@ -76,20 +80,27 @@ const VideoPlaylistItem: FC<Props> = ({ index, item, isSelected, onPlayItem, onR
               >
                 Location: {item.path}
               </div>
-              <div className='text-gray-500 group-hover:text-gray-400'>
-                Resolution: {metadata.width}x{metadata.height}
-              </div>
-              <div className='text-gray-500 group-hover:text-gray-400'>
-                Duration: {metadata && formatDuration(metadata.duration)}
-              </div>
+              {metadata ? (
+                <>
+                  <div className='text-gray-500 group-hover:text-gray-400'>
+                    Resolution: {metadata.width}x{metadata.height}
+                  </div>
+                  <div className='text-gray-500 group-hover:text-gray-400'>
+                    Duration: {formatDuration(metadata.duration)}
+                  </div>
+                </>
+              ) : (
+                <div className='text-red-400'>This video format is not supported.</div>
+              )}
             </div>
           )}
-          {metadata && (
+          {loaded && (
             <div className='w-1/6 min-w-[16.67%] flex justify-around items-center px-2'>
               <Button
                 variant='link'
-                title='Play'
-                className='text-gray-400 hover:bg-blue-50 hover:text-primary rounded-full w-10 relative'
+                title={metadata ? 'Play' : 'This video format is not supported'}
+                className='text-gray-400 hover:bg-blue-50 hover:text-primary rounded-full w-10 relative disabled:cursor-not-allowed'
+                disabled={!metadata}
                 onClick={() => onPlayItem(item)}
               >
                 <Play className='absolute' />

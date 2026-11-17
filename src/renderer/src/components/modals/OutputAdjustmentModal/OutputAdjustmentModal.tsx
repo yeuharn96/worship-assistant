@@ -19,7 +19,6 @@ import AdjustmentSliders from './AdjustmentSliders';
 import { Checkbox } from '@renderer/components/ui/checkbox';
 import QuickAlignButton from './QuickAlignButton';
 import ChangeBackgroundImageButton from '@renderer/components/ui/ChangeBackgroundImageButton';
-import { toast } from 'sonner';
 
 const OutputAdjustmentModal = () => {
   const { dimension = { width: 0, height: 0 } } = useOutputDimension();
@@ -225,27 +224,7 @@ const OutputAdjustmentModal = () => {
               <div className='underline mb-1'>Background:</div>
               <div className='flex'>
                 <div className='flex-[1] pr-2'>
-                  <ChangeBackgroundImageButton
-                    bgImage={bgImage}
-                    onChange={async (img) => {
-                      if (img) {
-                        try {
-                          img = await window.api.copyToDataFolder(img);
-                        } catch (e) {
-                          toast.error('Unable to change background image', {
-                            description: (e as Error).message,
-                            closeButton: true,
-                            duration: 10 * 1000,
-                          });
-                        }
-                      }
-
-                      if (bgImage) {
-                        window.api.removeFromDataFolder(bgImage);
-                      }
-                      setProfile({ bgImage: img });
-                    }}
-                  />
+                  <ChangeBackgroundImageButton bgImage={bgImage} onChange={(img) => setProfile({ bgImage: img })} />
                 </div>
                 <div className='flex-[1]'>
                   <input

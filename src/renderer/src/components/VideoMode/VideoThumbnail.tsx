@@ -1,15 +1,17 @@
 import { FC, useRef, useState } from 'react';
 import { VideoMetadata } from 'src/shared/types';
 
-type Props = { src: string; onVideoDataLoaded?: (metadata: VideoMetadata) => void } & React.DetailedHTMLProps<
-  React.HTMLAttributes<HTMLDivElement>,
-  HTMLDivElement
->;
+type Props = {
+  src: string;
+  onVideoDataLoaded?: (metadata: VideoMetadata) => void;
+  onVideoError?: () => void;
+} & React.DetailedHTMLProps<React.HTMLAttributes<HTMLDivElement>, HTMLDivElement>;
 
-const VideoThumbnail: FC<Props> = ({ src, onVideoDataLoaded, ...props }) => {
+const VideoThumbnail: FC<Props> = ({ src, onVideoDataLoaded, onVideoError, ...props }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [imgSrc, setImgSrc] = useState('');
+  const [failed, setFailed] = useState(false);
 
   const onLoadedData = () => {
     const canvasEl = canvasRef.current;
@@ -31,15 +33,30 @@ const VideoThumbnail: FC<Props> = ({ src, onVideoDataLoaded, ...props }) => {
 
   return (
     <div {...props}>
-      {!imgSrc && (
+      {!imgSrc && !failed && (
         <div className='w-full h-full flex justify-center items-center'>
           <div className='border-gray-300 h-10 w-10 animate-spin rounded-full border-4 border-t-blue-600' />
         </div>
       )}
+      {failed && (
+        <div className='w-full h-full flex justify-center items-center text-center text-sm text-gray-400 px-2'>
+          Unable to load video
+        </div>
+      )}
       {imgSrc && <img src={imgSrc} className='w-full h-full object-contain' />}
-      {!imgSrc && (
+      {!imgSrc && !failed && (
         <>
-          <video ref={videoRef} src={src} hidden onLoadedData={onLoadedData} preload='auto' />
+          <video
+            ref={videoRef}
+            src={src}
+            hidden
+            onLoadedData={onLoadedData}
+            onError={() => {
+              setFailed(true);
+              onVideoError && onVideoError();
+            }}
+            preload='auto'
+          />
           <canvas ref={canvasRef} hidden />
         </>
       )}

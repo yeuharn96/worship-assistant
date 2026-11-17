@@ -1,5 +1,6 @@
 import { CSSProperties } from 'react';
 import { TextSetting, Size, Scale, Adjustment } from 'src/shared/types';
+import { localFileUrl } from './utils';
 
 export const getTextSettingStyle = (setting: Omit<TextSetting, 'show'>): CSSProperties => ({
   color: setting.color,
@@ -47,7 +48,7 @@ export const getCanvasStyle = (canvasProps: {
 export const getCanvasBackground = (bgColor: string, bgImage?: string): CSSProperties => ({
   backgroundColor: bgColor,
   ...(bgImage && {
-    backgroundImage: `url("image:///${bgImage}")`,
+    backgroundImage: `url("${localFileUrl('image', bgImage)}")`,
     backgroundRepeat: 'no-repeat',
     backgroundSize: 'cover',
   }),

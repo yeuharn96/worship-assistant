@@ -14,12 +14,11 @@ const BibleBookSelect = () => {
 
   const [searchText, setSearchText] = useState('');
   const searchFilter = (book: BookMeta) => {
-    if (!searchText) return true;
+    const query = searchText.trim().toLowerCase();
+    if (!query) return true;
 
     return (
-      book.eng.toLowerCase().includes(searchText) ||
-      book._eng.toLowerCase().includes(searchText) ||
-      book.chi.includes(searchText)
+      book.eng.toLowerCase().includes(query) || book._eng.toLowerCase().includes(query) || book.chi.includes(query)
     );
   };
 

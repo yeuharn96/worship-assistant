@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { EyeOff, Presentation } from 'lucide-react';
 import BibleSelectionPane from '../components/BibleMode/BibleSelectionPane';
 import { Button } from '../components/ui/button';
@@ -14,9 +14,11 @@ import PreviewVideoPane from '@renderer/components/VideoMode/PreviewVideoPane';
 import { cn } from '@renderer/lib/utils';
 
 const ControlPanel = () => {
-  const { mode, setProfile, getProfile } = useProfileStore();
+  const profileState = useProfileStore();
+  const { mode, setProfile, getProfile } = profileState;
   const { book, chapter, verse, isShowing, playingVideo, setOutput } = useOutputStore();
-  const profile = getProfile();
+  // Only changes when the profile store changes, so effects below don't re-run on unrelated renders.
+  const profile = useMemo(() => getProfile(), [profileState]);
 
   const [currentTab, setCurrentTab] = useState('bible');
   const [settingTab, setSettingTab] = useState('setting');
@@ -30,8 +32,21 @@ const ControlPanel = () => {
       setBookTitleLanguage: (lang) => {
         setProfile({ lang });
       },
+      setOutputDimension: (dimension) => setOutput({ dimension }),
+      // Only sent while the output is hidden: the main process blocks importing while it's showing.
+      loadProfile: (importedProfile) => {
+        // The imported profile brings its own copy of its background, so the current one is no longer used.
+        // The main process can't remove it if it was picked this session, since it isn't saved until the app closes.
+        const { bgImage } = getProfile();
+        if (bgImage && bgImage !== importedProfile.bgImage) window.api.removeFromDataFolder(bgImage);
+
+        // settings.json leaves out a profile without a background, and setProfile only overwrites the keys it's
+        // given, so set bgImage explicitly or the (now deleted) current background would be kept.
+        setProfile({ ...importedProfile, bgImage: importedProfile.bgImage });
+        setCurrentTab(importedProfile.mode);
+      },
     },
-    [mode],
+    [mode, isShowing],
   );
 
   useEffect(() => {
@@ -48,7 +63,7 @@ const ControlPanel = () => {
 
   useEffect(() => {
     const handleBeforeUnload = () => {
-      window.electron.ipcRenderer.send('window-closing', profile);
+      window.electron.ipcRenderer.send('window-closing', getProfile());
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -56,7 +71,7 @@ const ControlPanel = () => {
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [profile]);
+  }, []);
 
   useEffect(() => {
     if (isShowing) window.api.applyOutputSettings(profile);

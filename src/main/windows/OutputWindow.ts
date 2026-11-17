@@ -1,6 +1,11 @@
-import { BrowserWindow, Display } from 'electron';
+import { app, BrowserWindow, Display } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
+import sendHandlers from '../ipc/sendHandlers';
+import { getMainWindow } from './getWindows';
+
+let isQuitting = false;
+app.on('before-quit', () => (isQuitting = true));
 
 export const createOutputWindow = (display: Display) => {
   const outputWindow = new BrowserWindow({
@@ -23,6 +28,18 @@ export const createOutputWindow = (display: Display) => {
     },
   });
 
+  // Windows shutdown / restart / log off closes windows without emitting `before-quit`.
+  outputWindow.on('session-end', () => (isQuitting = true));
+
+  // The output window lives for the whole session: closing it (e.g. Alt+F4) only hides it.
+  outputWindow.on('close', (e) => {
+    // Once the control panel is gone nothing can show the output again, so let it close.
+    const mainWindow = getMainWindow();
+    if (isQuitting || !mainWindow || mainWindow.isDestroyed()) return;
+    e.preventDefault();
+    sendHandlers.hideOutput();
+  });
+
   outputWindow.webContents.setWindowOpenHandler(() => {
     return { action: 'deny' };
   });
@@ -34,4 +51,11 @@ export const createOutputWindow = (display: Display) => {
   }
 
   return outputWindow;
+};
+
+/** Move the fullscreen output window onto `display` (e.g. after a projector is plugged in). */
+export const moveOutputWindow = (outputWindow: BrowserWindow, display: Display) => {
+  outputWindow.setFullScreen(false);
+  outputWindow.setBounds(display.bounds);
+  outputWindow.setFullScreen(true);
 };

@@ -31,6 +31,7 @@ const defaultProfile: Profile = {
   zh: { size: 18, color: '#ffffff', font: ZH_FONTS[0], show: true },
   en: { size: 56, color: '#ffff00', font: 'Yu Gothic', show: true },
   scrollUnit: 100,
+  smoothScrolling: false,
 
   // video
   playlist: [],
@@ -68,7 +69,7 @@ const useProfileStore = create<ProfileState>()((set, get) => ({
   setAdjustment: (adj) => set((state) => ({ ...state, adjustment: { ...state.adjustment, ...adj } })),
   setAdjustmentBg: (adj) => set((state) => ({ ...state, adjustmentBg: { ...state.adjustmentBg, ...adj } })),
   setTextSetting: (field, setting) => set((state) => ({ ...state, [field]: { ...state[field], ...setting } })),
-  addPlaylistItems: (items) => set((state) => ({ ...state, playlist: [...state.playlist, ...items] })),
+  addPlaylistItems: (items) => set((state) => ({ ...state, playlist: [...new Set([...state.playlist, ...items])] })),
   removePlaylistItem: (item) => set((state) => ({ ...state, playlist: state.playlist.filter((i) => i !== item) })),
 }));
 

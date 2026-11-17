@@ -1,124 +1,182 @@
-import { FC, useEffect, useRef, useState } from 'react';
-import { Chapter, Profile, ScriptureLocation, WebContentEventListeners } from 'src/shared/types';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { Chapter, Profile, ScriptureLocation, VersePos, WebContentEventListeners } from 'src/shared/types';
 import { getElementHeights } from '@renderer/lib/getCssStyles';
 import ContentLine from './ContentLine';
 import ContentTitle from './ContentTitle';
 
+export type OutputPaneHandle = {
+  /** Scroll to an absolute position (px). */
+  scrollTo: (top: number) => void;
+  /** Scroll by a relative amount (px), continuing from any smooth scroll still in progress. */
+  scrollBy: (offset: number) => void;
+  /** Scroll to the next (1) or previous (-1) verse. */
+  scrollVerse: (direction: 1 | -1) => void;
+};
+
 type Props = {
   selectedPassage: ScriptureLocation;
   profile: Profile;
-  scrollToVerse?: boolean;
-  onScrollToVerse?: () => void;
-  scrollOffset?: number;
-  onScrollOffset?: () => void;
+  /** Increment to jump to `selectedPassage.verse` once that chapter's text has loaded. */
+  scrollToVerseRequest?: number;
   scrollbar?: boolean;
   onScrollInfoChanged?: WebContentEventListeners['syncOutputScroll'];
 };
 
-const OutputPane: FC<Props> = ({
-  selectedPassage,
-  profile,
-  scrollToVerse = false,
-  onScrollToVerse,
-  scrollOffset,
-  onScrollOffset,
-  scrollbar = false,
-  onScrollInfoChanged,
-}) => {
-  const contentRef = useRef<HTMLDivElement>(null);
+type ChapterText = { key: string; zh?: Chapter; en?: Chapter };
 
-  const [zhText, setZhText] = useState<Chapter>();
-  const [enText, setEnText] = useState<Chapter>();
+const OutputPane = forwardRef<OutputPaneHandle, Props>(
+  ({ selectedPassage, profile, scrollToVerseRequest = 0, scrollbar = false, onScrollInfoChanged }, ref) => {
+    const contentRef = useRef<HTMLDivElement>(null);
+    const versesRef = useRef<HTMLDivElement>(null);
 
-  const { book, chapter, verse } = selectedPassage;
+    const [text, setText] = useState<ChapterText>();
 
-  const getVerseNum = () => Object.keys(zhText ?? enText ?? {});
-  const getVerseElement = (verseNum) =>
-    contentRef.current?.querySelector(`.verse-num-${verseNum}`) as HTMLElement | null;
+    const { book, chapter, verse } = selectedPassage;
+    const passageKey = `${book}-${chapter}`;
+    const verseNums = Object.keys(text?.zh ?? text?.en ?? {});
+    const behavior: ScrollBehavior = profile.smoothScrolling ? 'smooth' : 'auto';
 
-  useEffect(() => {
-    (async () => {
-      const { zh, en } = profile;
-      if (zh.show) {
-        const zhText = await window.api.getChpText('zh', book, chapter);
-        setZhText(zhText);
-      } else {
-        setZhText(undefined);
-      }
+    const versePosRef = useRef<VersePos[]>([]);
+    /** Where a smooth scroll in progress will end, so follow-up scrolls build on it rather than a mid-animation position. */
+    const targetRef = useRef<number | null>(null);
+    const handledVerseRequestRef = useRef(0);
+    const scrollFrameRef = useRef(0);
+    const onScrollInfoChangedRef = useRef(onScrollInfoChanged);
+    onScrollInfoChangedRef.current = onScrollInfoChanged;
 
-      if (en.show) {
-        const enText = await window.api.getChpText('en', book, chapter);
-        setEnText(enText);
-      } else {
-        setEnText(undefined);
-      }
-    })();
-  }, [book, chapter]);
-
-  const scrollChangeEvent = () => {
-    if (contentRef.current == undefined || !onScrollInfoChanged) return;
-
-    const { scrollHeight, scrollTop, offsetHeight } = contentRef.current;
-    const verseNums = getVerseNum();
-    const titleHeight = Number(getVerseElement(verseNums[0])?.offsetTop ?? 0);
-
-    const versePos = verseNums.map((verseNum) => {
-      const scrollTop = getVerseElement(verseNum)?.offsetTop;
-      return {
-        verse: verseNum,
-        scrollTop: scrollTop ? scrollTop - titleHeight : 0,
+    useEffect(() => {
+      let cancelled = false;
+      (async () => {
+        const [zh, en] = await Promise.all([
+          profile.zh.show ? window.api.getChpText('zh', book, chapter) : undefined,
+          profile.en.show ? window.api.getChpText('en', book, chapter) : undefined,
+        ]);
+        if (!cancelled) setText({ key: passageKey, zh, en });
+      })();
+      return () => {
+        cancelled = true;
       };
-    });
-    onScrollInfoChanged(scrollHeight - offsetHeight, scrollTop, versePos);
-  };
+    }, [book, chapter, profile.zh.show, profile.en.show]);
 
-  useEffect(() => {
-    if (!contentRef.current) return;
+    const measureVersePos = (): VersePos[] => {
+      const verseEls = Array.from(versesRef.current?.children ?? []) as HTMLElement[];
+      const firstTop = verseEls[0]?.offsetTop ?? 0;
+      return verseEls.map((el) => ({ verse: el.dataset.verse ?? '', scrollTop: el.offsetTop - firstTop }));
+    };
 
-    const observer = new MutationObserver(scrollChangeEvent);
-    observer.observe(contentRef.current, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [contentRef.current]);
+    const sendScrollInfo = (withVersePos: boolean) => {
+      const el = contentRef.current;
+      const callback = onScrollInfoChangedRef.current;
+      if (!el || !callback) return;
+      callback(el.scrollHeight - el.offsetHeight, el.scrollTop, withVersePos ? versePosRef.current : undefined);
+    };
 
-  useEffect(() => {
-    if (scrollToVerse) {
-      getVerseElement(verse)?.scrollIntoView();
-      onScrollToVerse && onScrollToVerse();
-      scrollChangeEvent();
-    }
-  }, [scrollToVerse]);
+    const updateLayout = () => {
+      versePosRef.current = measureVersePos();
+      sendScrollInfo(true);
+    };
 
-  useEffect(() => {
-    if (scrollOffset != undefined) {
-      contentRef.current?.scrollBy({ top: scrollOffset });
-      onScrollOffset && onScrollOffset();
-      scrollChangeEvent();
-    }
-  }, [scrollOffset]);
+    const scrollTo = (top: number, scrollBehavior = behavior) => {
+      const el = contentRef.current;
+      if (!el) return;
 
-  return (
-    <>
-      {profile.title.show && <ContentTitle profile={profile} book={book} chapter={chapter} />}
-      <div
-        ref={contentRef}
-        className={`overflow-auto px-2 ${!scrollbar && 'no-scrollbar'}`}
-        style={getElementHeights(profile.title).body}
-        onScroll={scrollChangeEvent}
-      >
-        {getVerseNum().map((verseNum) => (
-          <div key={`${book}-${chapter}-${verseNum}`}>
-            <ContentLine
-              profile={profile}
-              verseNum={verseNum}
-              zhText={zhText && zhText[verseNum]}
-              enText={enText && enText[verseNum]}
-            />
-            <div style={{ height: `${profile.spacing}pt` }}></div>
+      const target = Math.max(0, Math.min(top, el.scrollHeight - el.clientHeight));
+      targetRef.current = scrollBehavior === 'smooth' && Math.abs(target - el.scrollTop) >= 1 ? target : null;
+      el.scrollTo({ top: target, behavior: scrollBehavior });
+    };
+    const currentTop = () => targetRef.current ?? contentRef.current?.scrollTop ?? 0;
+
+    useImperativeHandle(ref, () => ({
+      scrollTo,
+      scrollBy: (offset) => scrollTo(currentTop() + offset),
+      scrollVerse: (direction) => {
+        const versePos = versePosRef.current;
+        if (versePos.length === 0) return;
+
+        const top = currentTop();
+        const verseIdx = Math.max(
+          0,
+          versePos.findLastIndex((pos) => top >= pos.scrollTop - 1),
+        );
+        const nextIdx = Math.min(versePos.length - 1, Math.max(0, verseIdx + direction));
+        scrollTo(versePos[nextIdx].scrollTop);
+      },
+    }));
+
+    // Re-measure whenever the content or the settings that affect layout change, and jump to the requested verse once
+    // the requested chapter's text is on screen.
+    useLayoutEffect(() => {
+      versePosRef.current = measureVersePos();
+
+      if (scrollToVerseRequest !== handledVerseRequestRef.current && text?.key === passageKey) {
+        handledVerseRequestRef.current = scrollToVerseRequest;
+        const pos = versePosRef.current.find((vp) => vp.verse === verse);
+        scrollTo(pos?.scrollTop ?? 0, 'auto');
+      }
+
+      sendScrollInfo(true);
+    }, [text, profile, passageKey, verse, scrollToVerseRequest]);
+
+    // Layout can also change later, e.g. when a web font finishes loading or the window is resized.
+    useEffect(() => {
+      const observer = new ResizeObserver(updateLayout);
+      if (contentRef.current) observer.observe(contentRef.current);
+      if (versesRef.current) observer.observe(versesRef.current);
+      return () => observer.disconnect();
+    }, []);
+
+    useEffect(() => {
+      const el = contentRef.current;
+      if (!el) return;
+
+      const handleScrollEnd = () => {
+        targetRef.current = null;
+        sendScrollInfo(false);
+      };
+      el.addEventListener('scrollend', handleScrollEnd);
+      return () => {
+        el.removeEventListener('scrollend', handleScrollEnd);
+        cancelAnimationFrame(scrollFrameRef.current);
+      };
+    }, []);
+
+    // Report scroll position at most once per frame.
+    const handleScroll = () => {
+      if (scrollFrameRef.current) return;
+      scrollFrameRef.current = requestAnimationFrame(() => {
+        scrollFrameRef.current = 0;
+        sendScrollInfo(false);
+      });
+    };
+
+    return (
+      <>
+        {profile.title.show && <ContentTitle profile={profile} book={book} chapter={chapter} />}
+        <div
+          ref={contentRef}
+          className={`overflow-auto px-2 ${!scrollbar && 'no-scrollbar'}`}
+          style={getElementHeights(profile.title).body}
+          onScroll={handleScroll}
+        >
+          <div ref={versesRef}>
+            {verseNums.map((verseNum) => (
+              <div key={`${text?.key}-${verseNum}`} data-verse={verseNum}>
+                <ContentLine
+                  profile={profile}
+                  verseNum={verseNum}
+                  zhText={text?.zh && text.zh[verseNum]}
+                  enText={text?.en && text.en[verseNum]}
+                />
+                <div style={{ height: `${profile.spacing}pt` }}></div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-    </>
-  );
-};
+        </div>
+      </>
+    );
+  },
+);
+
+OutputPane.displayName = 'OutputPane';
 
 export default OutputPane;
