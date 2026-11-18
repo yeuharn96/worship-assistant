@@ -33,6 +33,7 @@ const OutputAdjustmentModal = () => {
     setAdjustment,
     setAdjustmentBg,
     setProfile,
+    setBackgroundImage,
   } = useProfileStore();
   const { closeGlobalModal } = useModalStore();
 
@@ -224,7 +225,7 @@ const OutputAdjustmentModal = () => {
               <div className='underline mb-1'>Background:</div>
               <div className='flex'>
                 <div className='flex-[1] pr-2'>
-                  <ChangeBackgroundImageButton bgImage={bgImage} onChange={(img) => setProfile({ bgImage: img })} />
+                  <ChangeBackgroundImageButton bgImage={bgImage} onChange={setBackgroundImage} />
                 </div>
                 <div className='flex-[1]'>
                   <input

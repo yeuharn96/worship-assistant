@@ -10,7 +10,7 @@ import { useBibleText } from '@renderer/hooks/useBibleText';
 const TextSettingPane = () => {
   const profile = useProfileStore();
   const { openGlobalModal } = useModalStore();
-  const { setProfile, setTextSetting } = profile;
+  const { setProfile, setTextSetting, setBackgroundImage } = profile;
   const { title, num, zh, en } = profile;
   const { status: bibleStatus } = useBibleText();
   // Only mention languages that are switched on, so a church using one language isn't nagged about the other.
@@ -66,7 +66,7 @@ const TextSettingPane = () => {
       <div className='flex mb-2'>
         <div className='flex-[1] pr-2'>Background</div>
         <div className='flex-[1] pr-2'>
-          <ChangeBackgroundImageButton bgImage={profile.bgImage} onChange={(bgImage) => setProfile({ bgImage })} />
+          <ChangeBackgroundImageButton bgImage={profile.bgImage} onChange={setBackgroundImage} />
         </div>
         <div className='flex-[1]'>
           <input

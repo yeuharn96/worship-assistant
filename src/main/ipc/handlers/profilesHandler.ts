@@ -50,8 +50,10 @@ export const profilesHandler = {
   /** Kept in memory and saved to disk with the rest of the settings. */
   savePlaylist: (playlist: string[]) => appSettings.setPlaylist(playlist),
 
+  /** Save the active profile, e.g. on first run or after its background image changed. */
   saveProfile: (profile: Profile) => {
     appSettings.saveProfile(profile);
+    persist();
     refreshMenu();
   },
 
