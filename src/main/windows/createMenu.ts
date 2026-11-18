@@ -57,13 +57,13 @@ const createMenu = (mainWindow: BrowserWindow) => {
           label: 'English (EN)',
           type: 'radio',
           checked: lang === 'en',
-          click: () => publishWebContentEvent(mainWindow, 'setBookTitleLanguage', 'en'),
+          click: () => setLanguage(mainWindow, 'en'),
         },
         {
           label: 'Mandarin (ZH)',
           type: 'radio',
           checked: lang === 'zh',
-          click: () => publishWebContentEvent(mainWindow, 'setBookTitleLanguage', 'zh'),
+          click: () => setLanguage(mainWindow, 'zh'),
         },
       ],
     },
@@ -126,6 +126,16 @@ const createMenu = (mainWindow: BrowserWindow) => {
 
   // Set the menu
   Menu.setApplicationMenu(menu);
+};
+
+/**
+ * Also update the main process's copy of the active profile, which the menu is rebuilt from (e.g. when the output is
+ * shown); otherwise the menu would tick the previous language until the profile is next saved.
+ */
+const setLanguage = (mainWindow: BrowserWindow, lang: 'en' | 'zh') => {
+  const profile = appSettings.getActiveProfile();
+  if (profile) profile.lang = lang;
+  publishWebContentEvent(mainWindow, 'setBookTitleLanguage', lang);
 };
 
 const publishWebContentEvent = (

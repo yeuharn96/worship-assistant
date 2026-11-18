@@ -8,6 +8,11 @@ export interface ProfileState extends Profile {
   setProfile: (p: Partial<Profile>) => void;
   /** Replace every setting with `p`'s, using defaults for settings it doesn't have (e.g. saved by an older version). */
   loadProfile: (p: Profile) => void;
+  /**
+   * Change the background image and save the profile. The old image file is deleted right away, so the saved settings
+   * must not keep pointing to it (they're written when profiles change, not only on close).
+   */
+  setBackgroundImage: (bgImage?: string) => void;
   setAdjustment: (adj: Partial<Adjustment>) => void;
   setAdjustmentBg: (adj: Partial<Adjustment>) => void;
 
@@ -49,12 +54,25 @@ const useProfileStore = create<ProfileState>()((set, get) => ({
   ...createDefaultProfile(),
 
   getProfile: () => {
-    const { setProfile, loadProfile, setAdjustment, setAdjustmentBg, setTextSetting, getProfile, ...profile } = get();
+    const {
+      setProfile,
+      loadProfile,
+      setBackgroundImage,
+      setAdjustment,
+      setAdjustmentBg,
+      setTextSetting,
+      getProfile,
+      ...profile
+    } = get();
     return profile;
   },
 
   setProfile: (p) => set((state) => ({ ...state, ...p })),
   loadProfile: (p) => set((state) => ({ ...state, ...createDefaultProfile(), ...p })),
+  setBackgroundImage: (bgImage) => {
+    set((state) => ({ ...state, bgImage }));
+    window.api.saveProfile(get().getProfile());
+  },
   setAdjustment: (adj) => set((state) => ({ ...state, adjustment: { ...state.adjustment, ...adj } })),
   setAdjustmentBg: (adj) => set((state) => ({ ...state, adjustmentBg: { ...state.adjustmentBg, ...adj } })),
   setTextSetting: (field, setting) => set((state) => ({ ...state, [field]: { ...state[field], ...setting } })),
