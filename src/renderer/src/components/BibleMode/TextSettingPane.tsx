@@ -5,12 +5,19 @@ import { Button } from '../ui/button';
 import useModalStore from '@renderer/store/modal';
 import TextSettingItem from './TextSettingItem';
 import ChangeBackgroundImageButton from '../ui/ChangeBackgroundImageButton';
+import { useBibleText } from '@renderer/hooks/useBibleText';
 
 const TextSettingPane = () => {
   const profile = useProfileStore();
   const { openGlobalModal } = useModalStore();
   const { setProfile, setTextSetting } = profile;
   const { title, num, zh, en } = profile;
+  const { status: bibleStatus } = useBibleText();
+  // Only mention languages that are switched on, so a church using one language isn't nagged about the other.
+  const missingLangs = [
+    ...(zh.show && bibleStatus?.zh === 'none' ? ['Chinese'] : []),
+    ...(en.show && bibleStatus?.en === 'none' ? ['English'] : []),
+  ];
 
   return (
     <div>
@@ -106,6 +113,12 @@ const TextSettingPane = () => {
           </ToggleGroup>
         </div>
       </div>
+      {missingLangs.length > 0 && (
+        <p className='mt-2 text-sm text-yellow-400'>
+          No {missingLangs.join(' or ')} Bible text is loaded. Use Bible › Load {missingLangs[0]} Bible Text… in the
+          menu.
+        </p>
+      )}
     </div>
   );
 };

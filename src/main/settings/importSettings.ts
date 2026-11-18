@@ -1,5 +1,5 @@
 import { BrowserWindow, dialog } from 'electron';
-import { existsSync, readFileSync } from 'fs';
+import { copyFileSync, existsSync, readFileSync } from 'fs';
 import { basename, dirname, join, resolve } from 'path';
 import { is } from '@electron-toolkit/utils';
 import { Profile } from '../../shared/types';
@@ -8,6 +8,7 @@ import { fileHandler } from '../ipc/handlers/fileHandler';
 import sendHandlers from '../ipc/sendHandlers';
 import { getOutputWindow } from '../windows/getWindows';
 import { appSettings, isValidProfiles } from './AppSettings';
+import { BIBLE_LANGS, getBibleFileName, getImportedBiblePath, reloadBible } from '../bible/bible.data';
 
 const TITLE = 'Import Settings';
 
@@ -78,6 +79,9 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     return showError('The saved settings in this folder could not be read.', settingsFile);
   }
 
+  const oldDataFolder = dirname(settingsFile);
+  const bibleLangs = BIBLE_LANGS.filter((lang) => existsSync(join(oldDataFolder, getBibleFileName(lang))));
+
   const { response } = await dialog.showMessageBox(mainWindow, {
     type: 'question',
     title: TITLE,
@@ -85,12 +89,30 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     defaultId: 0,
     cancelId: 1,
     message: 'Replace your current settings?',
-    detail: `Your current text settings, playlist and background image will be replaced with the ones from:\n${dirname(settingsFile)}`,
+    detail: [
+      `Your current text settings, playlist and background image will be replaced with the ones from:\n${oldDataFolder}`,
+      bibleLangs.length > 0 ? 'The Bible text files you loaded in that version will also be copied.' : '',
+    ]
+      .filter(Boolean)
+      .join('\n\n'),
   });
   if (response !== 0) return false;
   if (await blockIfOutputShowing()) return false;
 
-  const oldDataFolder = dirname(settingsFile);
+  let missingBibleTexts = 0;
+  bibleLangs.forEach((lang) => {
+    try {
+      copyFileSync(join(oldDataFolder, getBibleFileName(lang)), getImportedBiblePath(lang));
+    } catch (e) {
+      console.error('Unable to copy Bible text file', e);
+      missingBibleTexts++;
+    }
+  });
+  if (bibleLangs.length > 0) {
+    reloadBible(bibleLangs);
+    sendHandlers.bibleTextChanged();
+  }
+
   let missingImages = 0;
   const importedProfiles = profiles.map((profile) => {
     if (!profile.bgImage) return profile;
@@ -118,9 +140,16 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     title: TITLE,
     message: 'Settings imported.',
     detail:
-      missingImages > 0
-        ? 'The background image could not be found in the previous version’s folder, so it was removed. You can set it again under Background.'
-        : undefined,
+      [
+        missingImages > 0
+          ? 'The background image could not be found in the previous version’s folder, so it was removed. You can set it again under Background.'
+          : '',
+        missingBibleTexts > 0
+          ? 'A Bible text file could not be copied. You can load it again from the Bible menu.'
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n\n') || undefined,
   });
   return true;
 };

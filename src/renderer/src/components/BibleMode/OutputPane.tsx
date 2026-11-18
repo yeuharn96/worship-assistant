@@ -1,6 +1,7 @@
-import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Chapter, Profile, ScriptureLocation, VersePos, WebContentEventListeners } from 'src/shared/types';
 import { getElementHeights } from '@renderer/lib/getCssStyles';
+import { useBibleText } from '@renderer/hooks/useBibleText';
 import ContentLine from './ContentLine';
 import ContentTitle from './ContentTitle';
 
@@ -30,10 +31,19 @@ const OutputPane = forwardRef<OutputPaneHandle, Props>(
     const versesRef = useRef<HTMLDivElement>(null);
 
     const [text, setText] = useState<ChapterText>();
+    const { revision: bibleRevision } = useBibleText();
 
     const { book, chapter, verse } = selectedPassage;
     const passageKey = `${book}-${chapter}`;
-    const verseNums = Object.keys(text?.zh ?? text?.en ?? {});
+    // Show every verse either language has text for: a loaded Bible text file may lack verses, and some translations
+    // leave a verse empty where it is merged into the one before (e.g. Gen 24:30 in the Chinese Union Version).
+    const verseNums = useMemo(
+      () =>
+        [...new Set([...Object.keys(text?.zh ?? {}), ...Object.keys(text?.en ?? {})])]
+          .filter((verseNum) => text?.zh?.[verseNum] || text?.en?.[verseNum])
+          .sort((a, b) => Number(a) - Number(b)),
+      [text],
+    );
     const behavior: ScrollBehavior = profile.smoothScrolling ? 'smooth' : 'auto';
 
     const versePosRef = useRef<VersePos[]>([]);
@@ -56,7 +66,7 @@ const OutputPane = forwardRef<OutputPaneHandle, Props>(
       return () => {
         cancelled = true;
       };
-    }, [book, chapter, profile.zh.show, profile.en.show]);
+    }, [book, chapter, profile.zh.show, profile.en.show, bibleRevision]);
 
     const measureVersePos = (): VersePos[] => {
       const verseEls = Array.from(versesRef.current?.children ?? []) as HTMLElement[];
