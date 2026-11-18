@@ -21,11 +21,30 @@ const isValidWindowState = (value: any): value is WindowState =>
 export const isValidProfiles = (value: any): value is Profile[] =>
   Array.isArray(value) && value.every((p) => typeof p?.profile?.id === 'string');
 
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/**
+ * Versions before 1.6 kept the video playlist in each profile; it's now shared. Remove it from `profiles` and return
+ * the playlist to use: `saved` if the settings already have a shared one, otherwise the active profile's.
+ */
+export const takePlaylist = (profiles: Profile[], saved?: unknown): string[] => {
+  const legacyProfiles = profiles as (Profile & { playlist?: unknown })[];
+  const active = legacyProfiles.find((p) => p.profile.selected) ?? legacyProfiles[0];
+  const legacyPlaylist = active?.playlist;
+  legacyProfiles.forEach((p) => delete p.playlist);
+
+  if (isStringArray(saved)) return saved;
+  return isStringArray(legacyPlaylist) ? legacyPlaylist : [];
+};
+
 class AppSettings {
   private static SETTINGS_FILE_PATH = getDataPath('settings.json');
   private static instance: AppSettings;
   private savedJson: string = '';
   private profiles: Profile[] = [];
+  /** Video paths, shared by all profiles. */
+  private playlist: string[] = [];
   private windowState?: WindowState;
 
   private constructor() {
@@ -60,6 +79,7 @@ class AppSettings {
     const profiles = settings?.profiles;
     if (isValidProfiles(profiles)) {
       this.profiles = profiles;
+      this.playlist = takePlaylist(profiles, settings.playlist);
       if (isValidWindowState(settings.windowState)) this.windowState = settings.windowState;
       return;
     }
@@ -114,10 +134,24 @@ class AppSettings {
   public getSelectedProfile() {
     return this.profiles.find((p) => p.profile.selected);
   }
+  /** The selected profile, selecting the first one if none is (e.g. settings from an older version). */
+  public getActiveProfile() {
+    const profile = this.getSelectedProfile() ?? this.profiles[0];
+    if (profile) this.selectProfile(profile.profile.id);
+    return profile;
+  }
 
-  /** Replace all profiles, e.g. when importing settings from a previous version. */
-  public replaceProfiles(profiles: Profile[]) {
+  /** Replace all profiles and the playlist, e.g. when importing settings from a previous version. */
+  public replaceProfiles(profiles: Profile[], playlist: string[]) {
     this.profiles = profiles;
+    this.playlist = playlist;
+  }
+
+  public getPlaylist() {
+    return this.playlist;
+  }
+  public setPlaylist(playlist: string[]) {
+    this.playlist = playlist;
   }
 
   public selectProfile(id: string) {
@@ -130,10 +164,23 @@ class AppSettings {
       this.profiles.push(value);
     } else {
       // Copy every key from the incoming profile so settings added in newer versions are saved too.
-      Object.assign(profile, value);
+      // Names are changed only through renameProfile, so keep the stored one over the renderer's (possibly older) copy.
+      Object.assign(profile, value, { profile: { ...value.profile, name: profile.profile.name } });
     }
 
     this.selectProfile(value.profile.id);
+  }
+
+  public renameProfile(id: string, name: string) {
+    const profile = this.getProfile(id);
+    if (profile) profile.profile.name = name;
+  }
+
+  /** Remove a profile and return it, or undefined if there's no such profile. */
+  public removeProfile(id: string) {
+    const profile = this.getProfile(id);
+    this.profiles = this.profiles.filter((p) => p.profile.id !== id);
+    return profile;
   }
 }
 

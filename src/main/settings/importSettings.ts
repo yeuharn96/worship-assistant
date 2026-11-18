@@ -7,7 +7,7 @@ import { getDataPath } from '../utils';
 import { fileHandler } from '../ipc/handlers/fileHandler';
 import sendHandlers from '../ipc/sendHandlers';
 import { getOutputWindow } from '../windows/getWindows';
-import { appSettings, isValidProfiles } from './AppSettings';
+import { appSettings, isValidProfiles, takePlaylist } from './AppSettings';
 import { BIBLE_LANGS, getBibleFileName, getImportedBiblePath, reloadBible } from '../bible/bible.data';
 
 const TITLE = 'Import Settings';
@@ -70,8 +70,11 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
   }
 
   let profiles: Profile[];
+  let savedPlaylist: unknown;
   try {
-    profiles = JSON.parse(readFileSync(settingsFile, { encoding: 'utf-8' }))?.profiles;
+    const settings = JSON.parse(readFileSync(settingsFile, { encoding: 'utf-8' }));
+    profiles = settings?.profiles;
+    savedPlaylist = settings?.playlist;
   } catch {
     return showError('The saved settings in this folder could not be read.', settingsFile);
   }
@@ -90,7 +93,7 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     cancelId: 1,
     message: 'Replace your current settings?',
     detail: [
-      `Your current text settings, playlist and background image will be replaced with the ones from:\n${oldDataFolder}`,
+      `All your profiles (text settings and background images) and the video playlist will be replaced with the ones from:\n${oldDataFolder}`,
       bibleLangs.length > 0 ? 'The Bible text files you loaded in that version will also be copied.' : '',
     ]
       .filter(Boolean)
@@ -125,15 +128,14 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
   // the renderer, which removes it when it receives the imported profile.
   appSettings.getProfiles().forEach((p) => p.bgImage && fileHandler.removeFromDataFolder(p.bgImage));
 
-  appSettings.replaceProfiles(importedProfiles);
+  appSettings.replaceProfiles(importedProfiles, takePlaylist(importedProfiles, savedPlaylist));
   try {
     !is.dev && appSettings.writeSaveFile();
   } catch (e) {
     console.error('Unable to save imported settings', e);
   }
 
-  const profile = appSettings.getSelectedProfile() ?? importedProfiles[0];
-  sendHandlers.loadProfile(profile);
+  sendHandlers.loadProfile(appSettings.getActiveProfile());
 
   await dialog.showMessageBox(mainWindow, {
     type: 'info',

@@ -1,6 +1,7 @@
 import { spawn } from 'child_process';
 import { WebContentEventListeners } from '../../shared/types';
 import { getMainWindow, getOutputWindow } from '../windows/getWindows';
+import { setOutputShowing } from '../appState';
 
 const sendHandlers = {
   showOutput: () => {
@@ -8,6 +9,7 @@ const sendHandlers = {
     outputWindow?.show();
     outputWindow?.moveTop();
     outputWindow?.focus();
+    setOutputShowing(true);
   },
   showFileInFolder: (filePath: string) => {
     const cmd = spawn(`explorer`, ['/select,', filePath]);
@@ -21,6 +23,7 @@ const sendHandlers = {
 const webContentEventHandlers: WebContentEventListeners = {
   hideOutput: () => {
     getOutputWindow()?.hide();
+    setOutputShowing(false);
     const mainWindow = getMainWindow();
     mainWindow?.moveTop();
     mainWindow?.focus();

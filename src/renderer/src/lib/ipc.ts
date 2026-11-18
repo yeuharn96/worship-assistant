@@ -1,7 +1,10 @@
 import { DependencyList, useEffect } from 'react';
-import { WebContentEventListeners } from 'src/shared/types';
+import { ControlPanelEventListeners, WebContentEventListeners } from 'src/shared/types';
 
-export const useIpcListeners = (handler: Partial<WebContentEventListeners>, deps = [] as DependencyList) => {
+export const useIpcListeners = (
+  handler: Partial<WebContentEventListeners & ControlPanelEventListeners>,
+  deps = [] as DependencyList,
+) => {
   useEffect(() => {
     const removeListener = {};
 

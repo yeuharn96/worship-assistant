@@ -1,27 +1,55 @@
-import { BrowserWindow, Menu, shell } from 'electron';
+import { BrowserWindow, Menu, MenuItemConstructorOptions, shell } from 'electron';
 import { existsSync } from 'fs';
 import { getDataFolder, getDataPath } from '../utils';
-import { WebContentEventListeners } from '../../shared/types';
+import { ControlPanelEventListeners, WebContentEventListeners } from '../../shared/types';
 import { appSettings } from '../settings/AppSettings';
+import { isOutputShowing, setMenuRefresher } from '../appState';
 import { importSettingsFromPreviousVersion } from '../settings/importSettings';
 import { hasImportedBibleText, importBibleText, removeBibleText, showBibleFileFormatHelp } from '../bible/importBible';
 
+/** On Windows `&` marks a menu item's access key, so double it to show it as typed. */
+const escapeLabel = (label: string) => label.replaceAll('&', '&&');
+
+/** Lists the profiles to switch between; the menu's title shows the active one. */
+const createProfileMenu = (mainWindow: BrowserWindow): MenuItemConstructorOptions => {
+  const active = appSettings.getActiveProfile();
+  const outputShowing = isOutputShowing();
+  // Switching goes through the control panel, which holds the active profile's unsaved changes.
+  const send = <T extends keyof ControlPanelEventListeners>(
+    channel: T,
+    ...args: Parameters<ControlPanelEventListeners[T]>
+  ) => mainWindow.webContents.send(channel, ...args);
+
+  return {
+    label: escapeLabel(active ? `Profile: ${active.profile.name}` : 'Profile'),
+    submenu: [
+      ...(outputShowing
+        ? ([
+            { label: 'Hide the output to switch profiles', enabled: false },
+            { type: 'separator' },
+          ] as MenuItemConstructorOptions[])
+        : []),
+      ...appSettings.getProfiles().map(({ profile }): MenuItemConstructorOptions => ({
+        label: escapeLabel(profile.name),
+        type: 'radio',
+        checked: profile.selected,
+        enabled: !outputShowing,
+        click: () => send('switchProfileRequested', profile.id),
+      })),
+      { type: 'separator' },
+      { label: 'Manage Profiles…', click: () => send('openProfilesManager') },
+    ],
+  };
+};
+
 const createMenu = (mainWindow: BrowserWindow) => {
-  const profile = appSettings.getSelectedProfile();
+  setMenuRefresher(() => createMenu(mainWindow));
+  const profile = appSettings.getActiveProfile();
   const lang = profile?.lang ?? 'en';
 
   // Create the menu
   const menu = Menu.buildFromTemplate([
-    // {
-    //   label: 'Profile',
-    //   submenu: [
-    //     { label: 'Manage' },
-    //     {
-    //       label: 'Switch Profile',
-    //       submenu: [{ label: 'profile 1' }, { label: 'profile 2' }],
-    //     },
-    //   ],
-    // },
+    createProfileMenu(mainWindow),
     {
       label: 'Language',
       submenu: [

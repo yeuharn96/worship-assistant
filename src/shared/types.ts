@@ -50,8 +50,7 @@ export type Profile = {
   scrollUnit: number;
   smoothScrolling: boolean;
 
-  // video
-  playlist: string[];
+  // video (the playlist is shared by all profiles)
   volume: number;
   // fadeOutSeconds: number;
   loop: boolean;
@@ -65,6 +64,11 @@ export type Profile = {
   adjustment: Adjustment;
   adjustmentBg: Adjustment; // will use this when `splitAdjBg` === true
 };
+
+/** A profile's identity, without its settings: enough to list and pick profiles. */
+export type ProfileInfo = Profile['profile'];
+/** `profile` is set by actions that make another profile active (switch, create). */
+export type ProfileActionResult = { ok: true; profile?: Profile } | { ok: false; error: string };
 
 export type Video = { path: string; name: string };
 export type VideoMetadata = Size & { duration: number };
@@ -80,6 +84,13 @@ export type VideoPlayState = {
 };
 
 export type VersePos = { verse: string; scrollTop: number };
+
+/** Events the main process sends to the control panel only (e.g. from the menu). */
+export type ControlPanelEventListeners = {
+  /** The user picked a profile in the menu. */
+  switchProfileRequested: (id: string) => void;
+  openProfilesManager: () => void;
+};
 
 export type WebContentEventListeners = {
   hideOutput: () => void;
