@@ -90,7 +90,7 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     cancelId: 1,
     message: 'Replace your current settings?',
     detail: [
-      `Your current text settings, playlist and background image will be replaced with the ones from:\n${oldDataFolder}`,
+      `All your profiles, with their text settings, playlists and background images, will be replaced with the ones from:\n${oldDataFolder}`,
       bibleLangs.length > 0 ? 'The Bible text files you loaded in that version will also be copied.' : '',
     ]
       .filter(Boolean)
@@ -132,8 +132,7 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     console.error('Unable to save imported settings', e);
   }
 
-  const profile = appSettings.getSelectedProfile() ?? importedProfiles[0];
-  sendHandlers.loadProfile(profile);
+  sendHandlers.loadProfile(appSettings.getActiveProfile());
 
   await dialog.showMessageBox(mainWindow, {
     type: 'info',

@@ -114,6 +114,12 @@ class AppSettings {
   public getSelectedProfile() {
     return this.profiles.find((p) => p.profile.selected);
   }
+  /** The selected profile, selecting the first one if none is (e.g. settings from an older version). */
+  public getActiveProfile() {
+    const profile = this.getSelectedProfile() ?? this.profiles[0];
+    if (profile) this.selectProfile(profile.profile.id);
+    return profile;
+  }
 
   /** Replace all profiles, e.g. when importing settings from a previous version. */
   public replaceProfiles(profiles: Profile[]) {
@@ -130,10 +136,23 @@ class AppSettings {
       this.profiles.push(value);
     } else {
       // Copy every key from the incoming profile so settings added in newer versions are saved too.
-      Object.assign(profile, value);
+      // Names are changed only through renameProfile, so keep the stored one over the renderer's (possibly older) copy.
+      Object.assign(profile, value, { profile: { ...value.profile, name: profile.profile.name } });
     }
 
     this.selectProfile(value.profile.id);
+  }
+
+  public renameProfile(id: string, name: string) {
+    const profile = this.getProfile(id);
+    if (profile) profile.profile.name = name;
+  }
+
+  /** Remove a profile and return it, or undefined if there's no such profile. */
+  public removeProfile(id: string) {
+    const profile = this.getProfile(id);
+    this.profiles = this.profiles.filter((p) => p.profile.id !== id);
+    return profile;
   }
 }
 

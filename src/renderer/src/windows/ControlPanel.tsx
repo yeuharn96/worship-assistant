@@ -6,16 +6,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import TextSettingPane from '../components/BibleMode/TextSettingPane';
 import AdvanceSettingPane from '../components/AdvanceSettingPane';
 import useProfileStore from '../store/profile';
+import useProfileListStore from '../store/profileList';
 import useOutputStore from '../store/output';
 import PreviewOutputPane from '@renderer/components/BibleMode/PreviewOutputPane';
 import { useIpcListeners } from '@renderer/lib/ipc';
 import VideoPlaylist from '@renderer/components/VideoMode/VideoPlaylist';
 import PreviewVideoPane from '@renderer/components/VideoMode/PreviewVideoPane';
 import { cn } from '@renderer/lib/utils';
+import useModalStore from '@renderer/store/modal';
+import { toast } from 'sonner';
 
 const ControlPanel = () => {
   const profileState = useProfileStore();
-  const { mode, setProfile, getProfile } = profileState;
+  const { mode, setProfile, getProfile, loadProfile } = profileState;
+  const { refresh: refreshProfiles, switchTo: switchProfile } = useProfileListStore();
+  const { openGlobalModal } = useModalStore();
   const { book, chapter, verse, isShowing, playingVideo, setOutput } = useOutputStore();
   // Only changes when the profile store changes, so effects below don't re-run on unrelated renders.
   const profile = useMemo(() => getProfile(), [profileState]);
@@ -40,26 +45,45 @@ const ControlPanel = () => {
         const { bgImage } = getProfile();
         if (bgImage && bgImage !== importedProfile.bgImage) window.api.removeFromDataFolder(bgImage);
 
-        // settings.json leaves out a profile without a background, and setProfile only overwrites the keys it's
-        // given, so set bgImage explicitly or the (now deleted) current background would be kept.
-        setProfile({ ...importedProfile, bgImage: importedProfile.bgImage });
+        // loadProfile resets keys the imported profile doesn't have (settings.json leaves out a missing background),
+        // so the (now deleted) current background isn't kept.
+        loadProfile(importedProfile);
         setCurrentTab(importedProfile.mode);
+        refreshProfiles();
       },
+      switchProfileRequested: async (id) => {
+        const error = await switchProfile(id);
+        if (error) toast.error('Unable to switch profile', { description: error, closeButton: true });
+      },
+      openProfilesManager: () => openGlobalModal({ name: 'profiles' }),
     },
     [mode, isShowing],
   );
 
   useEffect(() => {
     (async () => {
-      const currentProfile = (await window.api.getCurrentProfile()) ?? profile;
-      setProfile(currentProfile);
-      setCurrentTab(currentProfile.mode);
+      const savedProfile = await window.api.getCurrentProfile();
+      if (savedProfile) {
+        loadProfile(savedProfile);
+        setCurrentTab(savedProfile.mode);
+      } else {
+        // First run: register the default profile so it can be listed, renamed and switched away from.
+        await window.api.saveProfile(getProfile());
+      }
+      refreshProfiles();
     })();
   }, []);
 
   useEffect(() => {
     if (currentTab !== 'preview') setProfile({ mode: currentTab as 'bible' | 'video' });
   }, [currentTab]);
+
+  // Switching profile can change the mode, so follow it with the Bible/Video tab.
+  useEffect(() => {
+    if (currentTab === 'preview' || currentTab === mode) return;
+    setSettingTab(mode === 'video' ? 'advance' : 'setting');
+    setCurrentTab(mode);
+  }, [mode]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {

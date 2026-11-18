@@ -24,6 +24,14 @@ Genesis 1:2	The earth was without form and void…
 
 Books can be written as full English names (`Genesis`, `1 Samuel`), common abbreviations (`Gen`, `1Sam`, `Ps`, `Matt`) or Chinese names (`创世纪`, `创`). Lines that aren't verses, such as a title line, are skipped. The app tells you if any verses are missing or any book names aren't recognized.
 
+## Profiles
+
+A profile is a set of settings: text styles, background, line spacing, video playlist and output adjustment. Use profiles to keep separate setups, for example one for the main service and one for youth service.
+
+- The **Profile** menu shows the active profile. Choose another profile in it to switch. Changes are saved to the active profile.
+- Choose **Profile › Manage Profiles…** to create, rename or delete profiles. A new profile starts as a copy of the active one, or with default settings.
+- Profiles can't be switched or created while the output is showing, because that would change what is on the screen.
+
 ## Project Setup
 
 ### Install
