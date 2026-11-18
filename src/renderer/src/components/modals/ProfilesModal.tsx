@@ -100,7 +100,7 @@ const ProfilesModal = () => {
                   </span>
                   {isActive ? (
                     <span className='text-xs uppercase tracking-wide text-green-400 px-2'>Active</span>
-                  ) : (
+                  ) : isConfirmingDelete ? null : (
                     <Button
                       variant='border'
                       className='h-8 px-3'
