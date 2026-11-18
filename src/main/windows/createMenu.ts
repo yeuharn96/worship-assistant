@@ -4,6 +4,7 @@ import { getDataFolder, getDataPath } from '../utils';
 import { WebContentEventListeners } from '../../shared/types';
 import { appSettings } from '../settings/AppSettings';
 import { importSettingsFromPreviousVersion } from '../settings/importSettings';
+import { hasImportedBibleText, importBibleText, removeBibleText, showBibleFileFormatHelp } from '../bible/importBible';
 
 const createMenu = (mainWindow: BrowserWindow) => {
   const profile = appSettings.getSelectedProfile();
@@ -36,6 +37,40 @@ const createMenu = (mainWindow: BrowserWindow) => {
           checked: lang === 'zh',
           click: () => publishWebContentEvent(mainWindow, 'setBookTitleLanguage', 'zh'),
         },
+      ],
+    },
+    {
+      label: 'Bible',
+      submenu: [
+        {
+          label: 'Load English Bible Text…',
+          click: async () => {
+            if (await importBibleText(mainWindow, 'en')) createMenu(mainWindow);
+          },
+        },
+        {
+          label: 'Remove English Bible Text',
+          enabled: hasImportedBibleText('en'),
+          click: async () => {
+            if (await removeBibleText(mainWindow, 'en')) createMenu(mainWindow);
+          },
+        },
+        { type: 'separator' },
+        {
+          label: 'Load Chinese Bible Text…',
+          click: async () => {
+            if (await importBibleText(mainWindow, 'zh')) createMenu(mainWindow);
+          },
+        },
+        {
+          label: 'Use Built-in Chinese Text',
+          enabled: hasImportedBibleText('zh'),
+          click: async () => {
+            if (await removeBibleText(mainWindow, 'zh')) createMenu(mainWindow);
+          },
+        },
+        { type: 'separator' },
+        { label: 'About Bible Text Files…', click: () => showBibleFileFormatHelp(mainWindow) },
       ],
     },
     {

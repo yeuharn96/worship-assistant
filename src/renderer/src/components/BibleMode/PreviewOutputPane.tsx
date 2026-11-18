@@ -7,6 +7,7 @@ import { useIpcListeners } from '@renderer/lib/ipc';
 import { cn } from '@renderer/lib/utils';
 import { Checkbox } from '../ui/checkbox';
 import { useOutputMonitor } from '@renderer/hooks/useOutputMonitor';
+import { useBibleText } from '@renderer/hooks/useBibleText';
 import { VersePos } from 'src/shared/types';
 
 type Props = {
@@ -19,6 +20,7 @@ const PreviewOutputPane: FC<Props> = () => {
   const outputWrapperRef = useRef<HTMLDivElement>(null);
   const monitorRef = useRef<HTMLVideoElement>(null);
 
+  const { revision: bibleRevision } = useBibleText();
   const [selectedZhVerse, setSelectedZhVerse] = useState('');
   const [selectedEnVerse, setSelectedEnVerse] = useState('');
 
@@ -52,7 +54,7 @@ const PreviewOutputPane: FC<Props> = () => {
       setSelectedZhVerse(zhVrs);
       setSelectedEnVerse(enVrs);
     })();
-  }, [book, chapter, verse]);
+  }, [book, chapter, verse, bibleRevision]);
 
   const getDimensionStyle = (): CSSProperties => {
     if (!dimension) return {};

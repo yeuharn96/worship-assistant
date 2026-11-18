@@ -14,6 +14,10 @@ export type ChapterNum = string;
 export type Chapter = Record<VerseNum, VerseText>;
 export type VerseNum = string;
 export type VerseText = string;
+export type BibleLang = 'zh' | 'en';
+/** Where a language's Bible text comes from: a file the user loaded, the one shipped with the app, or nothing. */
+export type BibleSource = 'imported' | 'built-in' | 'none';
+export type BibleStatus = Record<BibleLang, BibleSource>;
 export type ScriptureLocation = {
   book: string;
   chapter: string;
@@ -35,7 +39,7 @@ export type Profile = {
   mode: 'bible' | 'video';
 
   // bible
-  lang: 'zh' | 'en';
+  lang: BibleLang;
   bgColor: string;
   bgImage?: string;
   spacing: number;
@@ -87,6 +91,8 @@ export type WebContentEventListeners = {
 
   // bible
   setBookTitleLanguage: (lang: 'en' | 'zh') => void;
+  /** A Bible text file was loaded or removed, so Bible text must be fetched again. */
+  bibleTextChanged: () => void;
   setOutputBibleText: (loc: ScriptureLocation) => void;
   /** Scroll the output by a relative amount (px). */
   scrollOutputOffset: (offset: number) => void;

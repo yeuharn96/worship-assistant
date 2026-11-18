@@ -11,6 +11,7 @@ const invokeEvents: App.IpcRendererApi['invoke'] = {
   getVerseCount: true,
   getChpText: true,
   getVerseText: true,
+  getBibleStatus: true,
   askImageDialog: true,
   copyToDataFolder: true,
   removeFromDataFolder: true,
@@ -38,6 +39,7 @@ const sendEvents: App.IpcRendererApi['send'] = {
   syncVideoPlayState: true,
   signalVideoEnded: true,
   setBookTitleLanguage: true,
+  bibleTextChanged: true,
 };
 
 const setupRendererApi = () => {
