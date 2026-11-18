@@ -2,6 +2,7 @@ import { Play, Pause, Square, RotateCcw, RotateCw, SkipBack, SkipForward } from 
 import { Button } from '../ui/button';
 import { VideoPlayState } from 'src/shared/types';
 import useProfileStore from '@renderer/store/profile';
+import usePlaylistStore from '@renderer/store/playlist';
 import { FC, useMemo } from 'react';
 import useOutputStore from '@renderer/store/output';
 import { useIpcListeners } from '@renderer/lib/ipc';
@@ -10,7 +11,8 @@ type Props = {
   playState: VideoPlayState;
 };
 const VideoControl: FC<Props> = ({ playState }) => {
-  const { playlist, skipSeconds, loop, playNext } = useProfileStore();
+  const { skipSeconds, loop, playNext } = useProfileStore();
+  const playlist = usePlaylistStore((s) => s.playlist);
   const { playingVideo, setOutput } = useOutputStore();
 
   // Derived from both, so reordering or removing items while a video plays keeps Next/Prev correct.

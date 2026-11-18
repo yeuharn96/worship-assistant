@@ -10,6 +10,8 @@ const invokeEvents: App.IpcRendererApi['invoke'] = {
   createProfile: true,
   renameProfile: true,
   deleteProfile: true,
+  getPlaylist: true,
+  savePlaylist: true,
   getOutputDimension: true,
   getChpCount: true,
   getVerseCount: true,

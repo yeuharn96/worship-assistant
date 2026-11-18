@@ -21,11 +21,30 @@ const isValidWindowState = (value: any): value is WindowState =>
 export const isValidProfiles = (value: any): value is Profile[] =>
   Array.isArray(value) && value.every((p) => typeof p?.profile?.id === 'string');
 
+const isStringArray = (value: unknown): value is string[] =>
+  Array.isArray(value) && value.every((item) => typeof item === 'string');
+
+/**
+ * Versions before 1.6 kept the video playlist in each profile; it's now shared. Remove it from `profiles` and return
+ * the playlist to use: `saved` if the settings already have a shared one, otherwise the active profile's.
+ */
+export const takePlaylist = (profiles: Profile[], saved?: unknown): string[] => {
+  const legacyProfiles = profiles as (Profile & { playlist?: unknown })[];
+  const active = legacyProfiles.find((p) => p.profile.selected) ?? legacyProfiles[0];
+  const legacyPlaylist = active?.playlist;
+  legacyProfiles.forEach((p) => delete p.playlist);
+
+  if (isStringArray(saved)) return saved;
+  return isStringArray(legacyPlaylist) ? legacyPlaylist : [];
+};
+
 class AppSettings {
   private static SETTINGS_FILE_PATH = getDataPath('settings.json');
   private static instance: AppSettings;
   private savedJson: string = '';
   private profiles: Profile[] = [];
+  /** Video paths, shared by all profiles. */
+  private playlist: string[] = [];
   private windowState?: WindowState;
 
   private constructor() {
@@ -60,6 +79,7 @@ class AppSettings {
     const profiles = settings?.profiles;
     if (isValidProfiles(profiles)) {
       this.profiles = profiles;
+      this.playlist = takePlaylist(profiles, settings.playlist);
       if (isValidWindowState(settings.windowState)) this.windowState = settings.windowState;
       return;
     }
@@ -121,9 +141,17 @@ class AppSettings {
     return profile;
   }
 
-  /** Replace all profiles, e.g. when importing settings from a previous version. */
-  public replaceProfiles(profiles: Profile[]) {
+  /** Replace all profiles and the playlist, e.g. when importing settings from a previous version. */
+  public replaceProfiles(profiles: Profile[], playlist: string[]) {
     this.profiles = profiles;
+    this.playlist = playlist;
+  }
+
+  public getPlaylist() {
+    return this.playlist;
+  }
+  public setPlaylist(playlist: string[]) {
+    this.playlist = playlist;
   }
 
   public selectProfile(id: string) {

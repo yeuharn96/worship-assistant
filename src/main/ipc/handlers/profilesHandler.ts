@@ -46,6 +46,10 @@ export const profilesHandler = {
   listProfiles: (): ProfileInfo[] => appSettings.getProfiles().map(({ profile }) => ({ ...profile })),
   getProfile: (id: string) => appSettings.getProfile(id),
   getCurrentProfile: () => appSettings.getActiveProfile(),
+  getPlaylist: () => appSettings.getPlaylist(),
+  /** Kept in memory and saved to disk with the rest of the settings. */
+  savePlaylist: (playlist: string[]) => appSettings.setPlaylist(playlist),
+
   saveProfile: (profile: Profile) => {
     appSettings.saveProfile(profile);
     refreshMenu();

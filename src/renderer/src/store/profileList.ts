@@ -1,7 +1,6 @@
 import { Profile, ProfileActionResult, ProfileInfo } from 'src/shared/types';
 import { create } from 'zustand';
 import useProfileStore, { createDefaultProfile } from './profile';
-import useOutputStore from './output';
 
 /** Each action resolves to an error message to show, or undefined if it succeeded. */
 interface ProfileListState {
@@ -15,12 +14,7 @@ interface ProfileListState {
 }
 
 /** Show `profile` in the control panel. */
-const activate = (profile: Profile) => {
-  useProfileStore.getState().loadProfile(profile);
-  // The selected video is session state: drop it if the new profile's playlist doesn't have it.
-  const { playingVideo, setOutput } = useOutputStore.getState();
-  if (playingVideo && !profile.playlist.includes(playingVideo)) setOutput({ playingVideo: undefined });
-};
+const activate = (profile: Profile) => useProfileStore.getState().loadProfile(profile);
 
 const useProfileListStore = create<ProfileListState>()((set, get) => {
   /** Apply a result's newly active profile (if any) and reload the list. */

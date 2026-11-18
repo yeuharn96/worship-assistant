@@ -57,7 +57,8 @@ const ProfilesModal = () => {
       <div>
         <div className='text-2xl font-bold'>Profiles</div>
         <p className='text-sm text-gray-400 mt-1'>
-          Each profile keeps its own text, background, playlist and output adjustment settings.
+          Each profile keeps its own text, background, output adjustment and video playback settings. The video playlist
+          is shared by all profiles.
         </p>
       </div>
 

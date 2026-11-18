@@ -26,7 +26,7 @@ Books can be written as full English names (`Genesis`, `1 Samuel`), common abbre
 
 ## Profiles
 
-A profile is a set of settings: text styles, background, line spacing, video playlist and output adjustment. Use profiles to keep separate setups, for example one for the main service and one for youth service.
+A profile is a set of settings: text styles, background, line spacing, output adjustment and video playback options (volume, loop, play next, skip seconds). Use profiles to keep separate setups, for example one for the main service and one for youth service. The video playlist is shared by all profiles.
 
 - The **Profile** menu shows the active profile. Choose another profile in it to switch. Changes are saved to the active profile.
 - Choose **Profile › Manage Profiles…** to create, rename or delete profiles. A new profile starts as a copy of the active one, or with default settings.

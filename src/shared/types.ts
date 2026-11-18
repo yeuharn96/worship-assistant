@@ -50,8 +50,7 @@ export type Profile = {
   scrollUnit: number;
   smoothScrolling: boolean;
 
-  // video
-  playlist: string[];
+  // video (the playlist is shared by all profiles)
   volume: number;
   // fadeOutSeconds: number;
   loop: boolean;

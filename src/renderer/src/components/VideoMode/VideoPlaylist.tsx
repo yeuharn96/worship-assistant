@@ -4,7 +4,7 @@ import { DragDropContext, OnDragEndResponder } from 'react-beautiful-dnd';
 import { Video } from 'src/shared/types';
 import { Button } from '../ui/button';
 import { ScrollArea } from '../ui/scroll-area';
-import useProfileStore from '@renderer/store/profile';
+import usePlaylistStore from '@renderer/store/playlist';
 import useOutputStore from '@renderer/store/output';
 import VideoPlaylistItem from './VideoPlaylistItem';
 import { StrictModeDroppable } from '../ui/StrictModeDroppable';
@@ -12,12 +12,12 @@ import { toast } from 'sonner';
 
 // https://egghead.io/lessons/react-persist-list-reordering-with-react-beautiful-dnd-using-the-ondragend-callback
 const VideoPlaylist = () => {
-  const { playlist, addPlaylistItems, removePlaylistItem, setProfile } = useProfileStore();
+  const { playlist, addPlaylistItems, removePlaylistItem, setPlaylist } = usePlaylistStore();
   const { playingVideo, isShowing, setOutput } = useOutputStore();
   // Lookup of every video found so far. Missing files are never cached, so they're checked again if re-added.
   const [videoInfo, setVideoInfo] = useState<Record<string, Video>>({});
 
-  // The profile's playlist is the single source of truth; this resolves names for new paths and drops missing files
+  // The playlist store is the single source of truth; this resolves names for new paths and drops missing files
   // from the playlist, so Next/Prev and auto-advance never land on a video that can't play.
   useEffect(() => {
     const unknownPaths = playlist.filter((videoPath) => !(videoPath in videoInfo));
@@ -36,8 +36,8 @@ const VideoPlaylist = () => {
       if (found.length > 0) setVideoInfo((prev) => ({ ...prev, ...Object.fromEntries(found) }));
       if (missing.length > 0) {
         // Read the latest playlist: it may have changed while the files were being checked.
-        const latest = useProfileStore.getState().playlist;
-        setProfile({ playlist: latest.filter((p) => !missing.includes(p)) });
+        const latest = usePlaylistStore.getState().playlist;
+        setPlaylist(latest.filter((p) => !missing.includes(p)));
         toast.warning(`${missing.length} video(s) could not be found and were removed from the playlist`, {
           description: (
             <ul>
@@ -104,7 +104,7 @@ const VideoPlaylist = () => {
     reordered.splice(destination.index, 0, moved);
     // Keep paths that are still being checked; the check above removes them if they turn out to be missing.
     const pending = playlist.filter((videoPath) => !(videoPath in videoInfo));
-    setProfile({ playlist: [...reordered, ...pending] });
+    setPlaylist([...reordered, ...pending]);
   };
 
   return (
