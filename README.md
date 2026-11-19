@@ -24,6 +24,16 @@ Genesis 1:2	The earth was without form and void…
 
 Books can be written as full English names (`Genesis`, `1 Samuel`), common abbreviations (`Gen`, `1Sam`, `Ps`, `Matt`) or Chinese names (`创世纪`, `创`). Lines that aren't verses, such as a title line, are skipped. The app tells you if any verses are missing or any book names aren't recognized.
 
+## Fonts
+
+Besides the fonts installed on the computer, you can add your own font files (TrueType `.ttf` or OpenType `.otf`), for example a font your church uses or one downloaded from Google Fonts.
+
+- Choose **Fonts › Add Fonts…** and select one or more font files. To get bold and italic text in a font's own design, add its Bold and Italic files too.
+- Added fonts are listed first in the font list next to each text setting.
+- Choose **Fonts › Remove Font** to remove one. Text set to use it is shown in the default font instead. Fonts can't be removed while the output is showing.
+
+The app copies the files into its `data` folder, so you can move or delete the originals afterwards. **Settings › Import from Previous Version…** also copies the fonts you added in that version.
+
 ## Profiles
 
 A profile is a set of settings: text styles, background, line spacing, output adjustment and video playback options (volume, loop, play next, skip seconds). Use profiles to keep separate setups, for example one for the main service and one for youth service. The video playlist is shared by all profiles.

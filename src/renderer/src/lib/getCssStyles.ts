@@ -5,7 +5,8 @@ import { localFileUrl } from './utils';
 export const getTextSettingStyle = (setting: Omit<TextSetting, 'show'>): CSSProperties => ({
   color: setting.color,
   fontSize: `${setting.size}pt`,
-  fontFamily: setting.font,
+  // Quoted so any font name works, e.g. one starting with a digit.
+  fontFamily: setting.font && `"${setting.font.replace(/["\\]/g, '\\$&')}"`,
   ...(setting.bold && { fontWeight: 'bold' }),
   ...(setting.italic && { fontStyle: 'italic' }),
   ...(setting.underline && { textDecorationLine: 'underline' }),

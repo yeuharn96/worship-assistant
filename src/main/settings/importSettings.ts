@@ -8,6 +8,7 @@ import { fileHandler } from '../ipc/handlers/fileHandler';
 import sendHandlers from '../ipc/sendHandlers';
 import { getOutputWindow } from '../windows/getWindows';
 import { appSettings, isValidProfiles, takePlaylist } from './AppSettings';
+import { copyFontsFrom, hasFontsIn } from '../fonts/customFonts';
 import { BIBLE_LANGS, getBibleFileName, getImportedBiblePath, reloadBible } from '../bible/bible.data';
 
 const TITLE = 'Import Settings';
@@ -84,6 +85,7 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
 
   const oldDataFolder = dirname(settingsFile);
   const bibleLangs = BIBLE_LANGS.filter((lang) => existsSync(join(oldDataFolder, getBibleFileName(lang))));
+  const hasFonts = hasFontsIn(oldDataFolder);
 
   const { response } = await dialog.showMessageBox(mainWindow, {
     type: 'question',
@@ -95,6 +97,7 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     detail: [
       `All your profiles (text settings and background images) and the video playlist will be replaced with the ones from:\n${oldDataFolder}`,
       bibleLangs.length > 0 ? 'The Bible text files you loaded in that version will also be copied.' : '',
+      hasFonts ? 'The fonts you added in that version will also be copied. Fonts you added here are kept.' : '',
     ]
       .filter(Boolean)
       .join('\n\n'),
@@ -115,6 +118,8 @@ export const importSettingsFromPreviousVersion = async (mainWindow: BrowserWindo
     reloadBible(bibleLangs);
     sendHandlers.bibleTextChanged();
   }
+
+  if (hasFonts) copyFontsFrom(oldDataFolder);
 
   let missingImages = 0;
   const importedProfiles = profiles.map((profile) => {

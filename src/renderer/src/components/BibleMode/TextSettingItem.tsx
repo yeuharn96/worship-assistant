@@ -1,9 +1,10 @@
-import { FC, useState, useEffect } from 'react';
+import { FC } from 'react';
 import InputNumber from '../ui/input-number';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { TextSetting } from 'src/shared/types';
 import { cn } from '@renderer/lib/utils';
 import { Toggle } from '../ui/toggle';
+import useFontsStore from '@renderer/store/fonts';
 
 type BaseProps = {
   name: string;
@@ -28,13 +29,16 @@ type Props = BaseProps | ExtendedProps;
 const TextSettingItem: FC<Props> = ({ name, color, size, font, onChange, extended, ...props }) => {
   const { bold, italic, underline, show, hideShowToggle } = extended ? props : ({} as any);
 
-  const [fontOptions, setFontOptions] = useState<string[]>([]);
-
-  useEffect(() => {
-    (async () => {
-      setFontOptions(await window.api.getSystemFonts());
-    })();
-  }, []);
+  const { customFonts, systemFonts, loaded } = useFontsStore();
+  // Keep showing a font that was removed or isn't installed on this computer, rather than a different one.
+  const isMissing = loaded && !!font && !customFonts.includes(font) && !systemFonts.includes(font);
+  const installedOptions = systemFonts
+    .filter((_font) => !customFonts.includes(_font))
+    .map((_font) => (
+      <option key={`${name}-${_font}`} value={_font}>
+        {_font}
+      </option>
+    ));
 
   return (
     <div className='flex my-2 items-center'>
@@ -95,11 +99,17 @@ const TextSettingItem: FC<Props> = ({ name, color, size, font, onChange, extende
       </div>
       <div className='flex-[2] pl-1'>
         <select className='input-primary' value={font} onChange={(e) => onChange && onChange({ font: e.target.value })}>
-          {fontOptions.map((_font) => (
-            <option key={`${name}-${_font}`} value={_font}>
-              {_font}
-            </option>
-          ))}
+          {isMissing && <option value={font}>{font} (not available)</option>}
+          {customFonts.length > 0 && (
+            <optgroup label='Added fonts'>
+              {customFonts.map((_font) => (
+                <option key={`${name}-custom-${_font}`} value={_font}>
+                  {_font}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          {customFonts.length > 0 ? <optgroup label='Installed fonts'>{installedOptions}</optgroup> : installedOptions}
         </select>
       </div>
     </div>

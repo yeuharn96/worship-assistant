@@ -1,6 +1,7 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import useOutputStore from '@renderer/store/output';
 import useProfileStore from '@renderer/store/profile';
+import useFontsStore from '@renderer/store/fonts';
 import OutputPane, { OutputPaneHandle } from '@renderer/components/BibleMode/OutputPane';
 import { useIpcListeners } from '@renderer/lib/ipc';
 import VideoOutput from '@renderer/components/VideoMode/VideoOutput';
@@ -9,6 +10,7 @@ import { getCanvasStyle } from '@renderer/lib/getCssStyles';
 const OutputWindow: FC = () => {
   const profile = useProfileStore();
   const { book, chapter, verse, dimension, setOutput } = useOutputStore();
+  const loadFonts = useFontsStore((s) => s.load);
 
   const outputPaneRef = useRef<OutputPaneHandle>(null);
   const [scrollToVerseRequest, setScrollToVerseRequest] = useState(0);
@@ -24,6 +26,7 @@ const OutputWindow: FC = () => {
     scrollOutputOffset: (offset) => outputPaneRef.current?.scrollBy(offset),
     scrollOutputTo: (top) => outputPaneRef.current?.scrollTo(top),
     scrollOutputVerse: (direction) => outputPaneRef.current?.scrollVerse(direction),
+    customFontsChanged: () => loadFonts(),
   });
 
   useEffect(() => {
@@ -31,6 +34,7 @@ const OutputWindow: FC = () => {
       const dimension = await window.api.getOutputDimension();
       setOutput({ dimension });
     })();
+    loadFonts();
   }, []);
 
   useEffect(() => {

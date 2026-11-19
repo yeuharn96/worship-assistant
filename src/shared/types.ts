@@ -92,6 +92,9 @@ export type ControlPanelEventListeners = {
   openProfilesManager: () => void;
 };
 
+/** A font file the user added, stored in the data folder's `fonts` folder. */
+export type CustomFont = { file: string; family: string; weight: number; style: 'normal' | 'italic' };
+
 export type WebContentEventListeners = {
   hideOutput: () => void;
   applyOutputSettings: (settings: Profile) => void;
@@ -104,6 +107,8 @@ export type WebContentEventListeners = {
   setBookTitleLanguage: (lang: 'en' | 'zh') => void;
   /** A Bible text file was loaded or removed, so Bible text must be fetched again. */
   bibleTextChanged: () => void;
+  /** Fonts were added or removed, so the windows must register them again. */
+  customFontsChanged: () => void;
   setOutputBibleText: (loc: ScriptureLocation) => void;
   /** Scroll the output by a relative amount (px). */
   scrollOutputOffset: (offset: number) => void;
