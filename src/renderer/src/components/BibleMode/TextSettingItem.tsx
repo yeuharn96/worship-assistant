@@ -1,10 +1,10 @@
-import { FC } from 'react';
+import { FC, useMemo } from 'react';
 import InputNumber from '../ui/input-number';
 import { ToggleGroup, ToggleGroupItem } from '../ui/toggle-group';
 import { TextSetting } from 'src/shared/types';
 import { cn } from '@renderer/lib/utils';
 import { Toggle } from '../ui/toggle';
-import useFontsStore from '@renderer/store/fonts';
+import useFontsStore, { isFontAvailable } from '@renderer/store/fonts';
 
 type BaseProps = {
   name: string;
@@ -30,8 +30,10 @@ const TextSettingItem: FC<Props> = ({ name, color, size, font, onChange, extende
   const { bold, italic, underline, show, hideShowToggle } = extended ? props : ({} as any);
 
   const { customFonts, systemFonts, loaded } = useFontsStore();
-  // Keep showing a font that was removed or isn't installed on this computer, rather than a different one.
-  const isMissing = loaded && !!font && !customFonts.includes(font) && !systemFonts.includes(font);
+  // Keep showing a font that isn't in the lists, rather than a different one, and say if it can't be drawn (e.g. it was
+  // removed, or the profile came from another computer).
+  const isUnlisted = loaded && !!font && !customFonts.includes(font) && !systemFonts.includes(font);
+  const isMissing = useMemo(() => isUnlisted && !isFontAvailable(font), [isUnlisted, font, customFonts]);
   const installedOptions = systemFonts
     .filter((_font) => !customFonts.includes(_font))
     .map((_font) => (
@@ -99,7 +101,7 @@ const TextSettingItem: FC<Props> = ({ name, color, size, font, onChange, extende
       </div>
       <div className='flex-[2] pl-1'>
         <select className='input-primary' value={font} onChange={(e) => onChange && onChange({ font: e.target.value })}>
-          {isMissing && <option value={font}>{font} (not available)</option>}
+          {isUnlisted && <option value={font}>{isMissing ? `${font} (not available)` : font}</option>}
           {customFonts.length > 0 && (
             <optgroup label='Added fonts'>
               {customFonts.map((_font) => (
