@@ -6,6 +6,8 @@ import { appSettings } from '../settings/AppSettings';
 import { isOutputShowing, setMenuRefresher } from '../appState';
 import { importSettingsFromPreviousVersion } from '../settings/importSettings';
 import { hasImportedBibleText, importBibleText, removeBibleText, showBibleFileFormatHelp } from '../bible/importBible';
+import checkForUpdates from '../updates/checkForUpdates';
+import showAbout from '../updates/showAbout';
 
 /** On Windows `&` marks a menu item's access key, so double it to show it as typed. */
 const escapeLabel = (label: string) => label.replaceAll('&', '&&');
@@ -120,6 +122,14 @@ const createMenu = (mainWindow: BrowserWindow) => {
             else shell.openPath(getDataFolder());
           },
         },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'Check for Updates…', click: () => checkForUpdates(mainWindow) },
+        { type: 'separator' },
+        { label: 'About Worship Assistant', click: () => showAbout(mainWindow) },
       ],
     },
   ]);

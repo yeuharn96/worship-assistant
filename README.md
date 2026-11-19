@@ -32,6 +32,12 @@ A profile is a set of settings: text styles, background, line spacing, output ad
 - Choose **Profile › Manage Profiles…** to create, rename or delete profiles. A new profile starts as a copy of the active one, or with default settings.
 - Profiles can't be switched or created while the output is showing, because that would change what is on the screen.
 
+## Updates
+
+Choose **Help › Check for Updates…** to see whether a newer version has been released. The app only checks when you choose this, and needs an internet connection to do so. If there is a newer version, you can download it or read what changed. To upgrade, unzip the download into a new folder, run it, then use **Settings › Import from Previous Version…** to bring across your profiles, playlist and Bible text.
+
+Choose **Help › About Worship Assistant** to see which version you have. **Copy Details** copies the version, system details and the location of the `data` folder, which helps when reporting a problem.
+
 ## Project Setup
 
 ### Install
