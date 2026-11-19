@@ -65,17 +65,19 @@ const freeFileName = (name: string) => {
  */
 const saveFont = (data: Buffer, fileName: string, info: FontInfo) => {
   const folder = getFontsFolder();
+  // List the fonts before writing, so the new file is never mistaken for the one it replaces.
+  const existing = listCustomFonts();
+  const replaced = existing.filter((f) => isSameStyle(f, info));
   // Write the new file before removing the one it replaces, so a failed copy doesn't lose the font.
   let file = freeFileName(fileName);
   writeFileSync(join(folder, file), data);
-  const replaced = listCustomFonts().filter((f) => isSameStyle(f, info));
   replaced.forEach((f) => rmSync(join(folder, f.file), { force: true }));
   // Keep the original file name if the replaced file had it.
   if (file !== fileName && !existsSync(join(folder, fileName))) {
     renameSync(join(folder, file), join(folder, fileName));
     file = fileName;
   }
-  fonts = sortFonts([...listCustomFonts().filter((f) => !replaced.includes(f)), { file, ...info }]);
+  fonts = sortFonts([...existing.filter((f) => !replaced.includes(f)), { file, ...info }]);
 };
 
 /** Ask for font files and add them. Returns true if any were added. */
