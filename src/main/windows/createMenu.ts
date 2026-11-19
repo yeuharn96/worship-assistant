@@ -5,7 +5,10 @@ import { ControlPanelEventListeners, WebContentEventListeners } from '../../shar
 import { appSettings } from '../settings/AppSettings';
 import { isOutputShowing, setMenuRefresher } from '../appState';
 import { importSettingsFromPreviousVersion } from '../settings/importSettings';
+import { addFonts, getCustomFamilies, removeFont } from '../fonts/customFonts';
 import { hasImportedBibleText, importBibleText, removeBibleText, showBibleFileFormatHelp } from '../bible/importBible';
+import checkForUpdates from '../updates/checkForUpdates';
+import showAbout from '../updates/showAbout';
 
 /** On Windows `&` marks a menu item's access key, so double it to show it as typed. */
 const escapeLabel = (label: string) => label.replaceAll('&', '&&');
@@ -38,6 +41,32 @@ const createProfileMenu = (mainWindow: BrowserWindow): MenuItemConstructorOption
       })),
       { type: 'separator' },
       { label: 'Manage Profiles…', click: () => send('openProfilesManager') },
+    ],
+  };
+};
+
+/** Fonts the user added, on top of the ones installed on the computer. */
+const createFontsMenu = (mainWindow: BrowserWindow): MenuItemConstructorOptions => {
+  const families = getCustomFamilies();
+  return {
+    label: 'Fonts',
+    submenu: [
+      {
+        label: 'Add Fonts…',
+        click: async () => {
+          if (await addFonts(mainWindow)) createMenu(mainWindow);
+        },
+      },
+      {
+        label: 'Remove Font',
+        enabled: families.length > 0,
+        submenu: families.map((family) => ({
+          label: escapeLabel(family),
+          click: async () => {
+            if (await removeFont(mainWindow, family)) createMenu(mainWindow);
+          },
+        })),
+      },
     ],
   };
 };
@@ -101,6 +130,7 @@ const createMenu = (mainWindow: BrowserWindow) => {
         { label: 'About Bible Text Files…', click: () => showBibleFileFormatHelp(mainWindow) },
       ],
     },
+    createFontsMenu(mainWindow),
     {
       label: 'Settings',
       submenu: [
@@ -120,6 +150,14 @@ const createMenu = (mainWindow: BrowserWindow) => {
             else shell.openPath(getDataFolder());
           },
         },
+      ],
+    },
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'Check for Updates…', click: () => checkForUpdates(mainWindow) },
+        { type: 'separator' },
+        { label: 'About Worship Assistant', click: () => showAbout(mainWindow) },
       ],
     },
   ]);

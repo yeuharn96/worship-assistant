@@ -8,6 +8,7 @@ import AdvanceSettingPane from '../components/AdvanceSettingPane';
 import useProfileStore from '../store/profile';
 import useProfileListStore from '../store/profileList';
 import usePlaylistStore from '../store/playlist';
+import useFontsStore from '../store/fonts';
 import useOutputStore from '../store/output';
 import PreviewOutputPane from '@renderer/components/BibleMode/PreviewOutputPane';
 import { useIpcListeners } from '@renderer/lib/ipc';
@@ -23,6 +24,7 @@ const ControlPanel = () => {
   const { refresh: refreshProfiles, switchTo: switchProfile } = useProfileListStore();
   const { openGlobalModal } = useModalStore();
   const loadPlaylist = usePlaylistStore((s) => s.load);
+  const loadFonts = useFontsStore((s) => s.load);
   const { book, chapter, verse, isShowing, playingVideo, setOutput } = useOutputStore();
   // Only changes when the profile store changes, so effects below don't re-run on unrelated renders.
   const profile = useMemo(() => getProfile(), [profileState]);
@@ -59,6 +61,7 @@ const ControlPanel = () => {
         if (error) toast.error('Unable to switch profile', { description: error, closeButton: true });
       },
       openProfilesManager: () => openGlobalModal({ name: 'profiles' }),
+      customFontsChanged: () => loadFonts(),
     },
     [mode, isShowing],
   );
@@ -76,6 +79,7 @@ const ControlPanel = () => {
       refreshProfiles();
     })();
     loadPlaylist();
+    loadFonts();
   }, []);
 
   useEffect(() => {

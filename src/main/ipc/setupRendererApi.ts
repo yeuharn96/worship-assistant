@@ -25,6 +25,8 @@ const invokeEvents: App.IpcRendererApi['invoke'] = {
   getFileName: true,
   checkFileExists: true,
   getSystemFonts: true,
+  getCustomFonts: true,
+  getCustomFontFile: true,
 };
 
 const sendEvents: App.IpcRendererApi['send'] = {
@@ -46,6 +48,7 @@ const sendEvents: App.IpcRendererApi['send'] = {
   signalVideoEnded: true,
   setBookTitleLanguage: true,
   bibleTextChanged: true,
+  customFontsChanged: true,
 };
 
 const setupRendererApi = () => {
