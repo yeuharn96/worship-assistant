@@ -1,5 +1,4 @@
 import { app, BrowserWindow, clipboard, dialog, shell } from 'electron';
-import { arch, release, type } from 'os';
 import { getDataFolder } from '../utils';
 import { REPO_URL } from './checkForUpdates';
 
@@ -11,7 +10,6 @@ const showAbout = async (mainWindow: BrowserWindow) => {
     `Electron: ${process.versions.electron}`,
     `Chromium: ${process.versions.chrome}`,
     `Node.js: ${process.versions.node}`,
-    `OS: ${type()} ${release()} (${arch()})`,
     `Data folder: ${getDataFolder()}`,
   ];
 
