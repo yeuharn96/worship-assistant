@@ -121,7 +121,7 @@ const checkForUpdates = async (mainWindow: BrowserWindow) => {
     detail: [
       `You have version ${currentVersion}.`,
       notes,
-      'To upgrade, unzip the download into a new folder, run it, then use Settings → Import from Previous Version… to bring across your profiles, playlist and Bible text.',
+      'To upgrade, unzip the download into a new folder, run it, then use Settings → Import from Previous Version… to bring across your profiles, playlist, Bible text and fonts.',
     ]
       .filter(Boolean)
       .join('\n\n'),

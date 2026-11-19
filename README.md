@@ -44,7 +44,7 @@ A profile is a set of settings: text styles, background, line spacing, output ad
 
 ## Updates
 
-Choose **Help › Check for Updates…** to see whether a newer version has been released. The app only checks when you choose this, and needs an internet connection to do so. If there is a newer version, you can download it or read what changed. To upgrade, unzip the download into a new folder, run it, then use **Settings › Import from Previous Version…** to bring across your profiles, playlist and Bible text.
+Choose **Help › Check for Updates…** to see whether a newer version has been released. The app only checks when you choose this, and needs an internet connection to do so. If there is a newer version, you can download it or read what changed. To upgrade, unzip the download into a new folder, run it, then use **Settings › Import from Previous Version…** to bring across your profiles, playlist, Bible text and fonts.
 
 Choose **Help › About Worship Assistant** to see which version you have. **Copy Details** copies the version numbers and the location of the `data` folder, which helps when reporting a problem.
 
