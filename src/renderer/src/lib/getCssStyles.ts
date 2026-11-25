@@ -2,10 +2,13 @@ import { CSSProperties } from 'react';
 import { TextSetting, Size, Scale, Adjustment } from 'src/shared/types';
 import { localFileUrl } from './utils';
 
+/** Quote a font name for CSS, so any name works, e.g. one starting with a digit. */
+export const quoteFontFamily = (family: string) => `"${family.replace(/["\\]/g, '\\$&')}"`;
+
 export const getTextSettingStyle = (setting: Omit<TextSetting, 'show'>): CSSProperties => ({
   color: setting.color,
   fontSize: `${setting.size}pt`,
-  fontFamily: setting.font,
+  fontFamily: setting.font && quoteFontFamily(setting.font),
   ...(setting.bold && { fontWeight: 'bold' }),
   ...(setting.italic && { fontStyle: 'italic' }),
   ...(setting.underline && { textDecorationLine: 'underline' }),

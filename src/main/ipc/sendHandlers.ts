@@ -52,6 +52,10 @@ const webContentEventHandlers: WebContentEventListeners = {
     getMainWindow()?.webContents.send('bibleTextChanged');
     getOutputWindow()?.webContents.send('bibleTextChanged');
   },
+  customFontsChanged: () => {
+    getMainWindow()?.webContents.send('customFontsChanged');
+    getOutputWindow()?.webContents.send('customFontsChanged');
+  },
   setOutputBibleText: (...args) => {
     getOutputWindow()?.webContents.send('setOutputBibleText', ...args);
   },
