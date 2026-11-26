@@ -9,6 +9,7 @@ import { addFonts, getCustomFamilies, removeFont } from '../fonts/customFonts';
 import { hasImportedBibleText, importBibleText, removeBibleText, showBibleFileFormatHelp } from '../bible/importBible';
 import checkForUpdates from '../updates/checkForUpdates';
 import showAbout from '../updates/showAbout';
+import showUserGuide from './GuideWindow';
 
 /** On Windows `&` marks a menu item's access key, so double it to show it as typed. */
 const escapeLabel = (label: string) => label.replaceAll('&', '&&');
@@ -155,6 +156,13 @@ const createMenu = (mainWindow: BrowserWindow) => {
     {
       label: 'Help',
       submenu: [
+        {
+          label: 'User Guide',
+          accelerator: 'F1',
+          // Someone who picked Chinese book names most likely reads Chinese best; the guide can switch either way.
+          click: () => showUserGuide(appSettings.getActiveProfile()?.lang ?? 'en'),
+        },
+        { type: 'separator' },
         { label: 'Check for Updates…', click: () => checkForUpdates(mainWindow) },
         { type: 'separator' },
         { label: 'About Worship Assistant', click: () => showAbout(mainWindow) },

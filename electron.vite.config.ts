@@ -15,6 +15,7 @@ export default defineConfig({
         input: {
           index: resolve(__dirname, 'src/renderer/index.html'),
           output: resolve(__dirname, 'src/renderer/output.html'),
+          guide: resolve(__dirname, 'src/renderer/guide.html'),
         },
       },
     },
