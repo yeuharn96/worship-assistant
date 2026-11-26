@@ -2,51 +2,13 @@
 
 A simple app to assist worship service presentations
 
-## Bible Text
+## User Guide
 
-The app comes with the Chinese Union Version (和合本, public domain). It doesn't include an English translation, so load one before showing English text:
+The [User Guide](docs/user-guide.md) explains how to use the app, from connecting the projector to showing passages and videos, with step-by-step recipes for common tasks. It is also built into the app: choose **Help › User Guide** or press **F1**.
 
-1. Get a Bible text file for a translation you are allowed to use. Many modern translations are copyrighted and need permission from their publisher. Public domain English translations include the Berean Standard Bible (BSB), the World English Bible (WEB) and the King James Version (KJV).
-2. In the app, choose **Bible › Load English Bible Text…** and select the file.
+使用手册也有中文版：[Worship Assistant 使用手册](docs/user-guide.zh.md)。The app opens it when **Language** is set to **Mandarin (ZH)**, and the guide window can switch between the two.
 
-You can also replace the built-in Chinese text with **Bible › Load Chinese Bible Text…**.
-
-The app copies the file into its `data` folder, next to `Worship Assistant.exe`. **Settings › Import from Previous Version…** also copies loaded Bible text files when you upgrade.
-
-### File format
-
-A UTF-8 text file with one verse per line, written as `<book> <chapter>:<verse> <text>`. The book name can be separated from the reference by spaces or a tab:
-
-```
-Gen 1:1 In the beginning, God created the heavens and the earth.
-Genesis 1:2	The earth was without form and void…
-```
-
-Books can be written as full English names (`Genesis`, `1 Samuel`), common abbreviations (`Gen`, `1Sam`, `Ps`, `Matt`) or Chinese names (`创世纪`, `创`). Lines that aren't verses, such as a title line, are skipped. The app tells you if any verses are missing or any book names aren't recognized.
-
-## Fonts
-
-Besides the fonts installed on the computer, you can add your own font files (TrueType `.ttf` or OpenType `.otf`), for example a font your church uses or one downloaded from Google Fonts.
-
-- Choose **Fonts › Add Fonts…** and select one or more font files. To get bold and italic text in a font's own design, add its Bold and Italic files too.
-- Added fonts are listed first in the font list next to each text setting.
-- Choose **Fonts › Remove Font** to remove one. Text set to use it is shown in the default font instead. Fonts can't be removed while the output is showing.
-
-The app copies the files into its `data` folder, so you can move or delete the originals afterwards. **Settings › Import from Previous Version…** also copies the fonts you added in that version.
-
-## Profiles
-
-A profile is a set of settings: text styles, background, line spacing, output adjustment and video playback options (volume, loop, play next, skip seconds). Use profiles to keep separate setups, for example one for the main service and one for youth service. The video playlist is shared by all profiles.
-
-- The **Profile** menu shows the active profile. Choose another profile in it to switch. Changes are saved to the active profile.
-- Choose **Profile › Manage Profiles…** to create, rename or delete profiles. A new profile starts as a copy of the active one, or with default settings.
-- Profiles can't be switched or created while the output is showing, because that would change what is on the screen.
-
-## Updates
-
-Choose **Help › Check for Updates…** to see whether a newer version has been released. The app only checks when you choose this, and needs an internet connection to do so. If there is a newer version, you can download it or read what changed. To upgrade, unzip the download into a new folder, run it, then use **Settings › Import from Previous Version…** to bring across your profiles, playlist, Bible text and fonts.
-
-Choose **Help › About Worship Assistant** to see which version you have. **Copy Details** copies the version numbers and the location of the `data` folder, which helps when reporting a problem.
+When you change the guide, update both versions. To add screenshots, put the images in `docs/images` and refer to them as `images/<file>`. Both guides share them, and the app bundles them with the guide.
 
 ## Project Setup
 
